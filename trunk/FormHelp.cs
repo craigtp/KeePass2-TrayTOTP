@@ -13,15 +13,15 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private TrayTotpGTExt plugin = null;
+        private readonly TrayTotpGTExt plugin;
         /// <summary>
         /// KeePass Host.
         /// </summary>
-        private IPluginHost m_host = null;
+        private readonly IPluginHost m_host;
         /// <summary>
         /// Getting started flag.
         /// </summary>
-        private bool _GettingStarted;
+        private readonly bool _GettingStarted;
 
         /// <summary>
         /// Windows Form Constructor.
@@ -43,8 +43,8 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormHelp_Load(object sender, EventArgs e)
         {
-            this.Size = new Size(550, 350);
-            this.Text = TrayTotpGTExt.strHelp + " - " + TrayTotpGTExt.strTrayTotpPlugin;
+            Size = new Size(550, 350);
+            Text = TrayTotpGTExt.strHelp + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin;
             foreach (Control Ctl in SplitContainerHelp.Panel2.Controls)
             {
                 Ctl.Location = new Point(3,3);
@@ -61,7 +61,7 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormHelp_FormClosing(object sender, FormClosingEventArgs e)
         {
-            this.Hide();
+            Hide();
             e.Cancel = true;
         }
 
@@ -111,8 +111,6 @@ namespace TrayTotpGT
                         break;
                     case "Storage":
                         PanelStorage.BringToFront();
-                        break;
-                    default:
                         break;
                 }
             }

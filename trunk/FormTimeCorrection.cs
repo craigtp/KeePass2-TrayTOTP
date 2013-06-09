@@ -14,11 +14,11 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private TrayTotpGTExt plugin = null;
+        private readonly TrayTotpGTExt plugin;
         /// <summary>
         /// KeePass Host.
         /// </summary>
-        private IPluginHost m_host = null;
+        private readonly IPluginHost m_host;
 
         /// <summary>
         /// Windows Form Constructor when creating new Time Correction.
@@ -55,7 +55,7 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormTimeCorrection_Load(object sender, EventArgs e)
         {
-            this.Text = TrayTotpGTExt.strTimeCorrection + " - " + TrayTotpGTExt.strTrayTotpPlugin; //Sets the form's display text.
+            this.Text = TrayTotpGTExt.strTimeCorrection + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin; //Sets the form's display text.
             if (m_host.MainWindow.ActiveDatabase.IsOpen)
             {
                 foreach (var pe in m_host.MainWindow.ActiveDatabase.RootGroup.GetEntries(true)) //Goes through all entries to find existing urls but excludes existing time corrections.

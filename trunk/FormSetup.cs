@@ -14,15 +14,15 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private TrayTotpGTExt plugin = null;
+        private readonly TrayTotpGTExt plugin;
         /// <summary>
         /// KeePass Host.
         /// </summary>
-        private IPluginHost m_host = null;
+        private readonly IPluginHost m_host;
         /// <summary>
         /// Current entry's reference.
         /// </summary>
-        private PwEntry entry;
+        private readonly PwEntry entry;
 
         /// <summary>
         /// Windows Form Constructor.
@@ -129,7 +129,7 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormSetup_Load(object sender, EventArgs e)
         {
-            this.Text = TrayTotpGTExt.strSetup + " - " + TrayTotpGTExt.strTrayTotpPlugin; //Set form's name using constants.
+            this.Text = TrayTotpGTExt.strSetup + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin; //Set form's name using constants.
             if (plugin.SettingsCheck(entry)) //Checks the the totp settings exists.
             {
                 string[] Settings = plugin.SettingsGet(entry); //Gets the the existing totp settings.
@@ -186,7 +186,8 @@ namespace TrayTotpGT
                     //Seed
                     ErrorProviderSetup.SetError(TextBoxSeedSetup, string.Empty);
                     if (TextBoxSeedSetup.Text == string.Empty) ErrorProviderSetup.SetError(TextBoxSeedSetup, "Seed cannot be empty!");
-                    if (TextBoxSeedSetup.Text.Contains(";")) ErrorProviderSetup.SetError(TextBoxSeedSetup, "Invalid character! (;)");
+                    string InvalidBase32Chars;
+                    if (!TextBoxSeedSetup.Text.ExtWithoutSpaces().ExtIsBase32(out InvalidBase32Chars)) ErrorProviderSetup.SetError(TextBoxSeedSetup, "Invalid character(" + InvalidBase32Chars + ")!");
                     if (ErrorProviderSetup.GetError(TextBoxSeedSetup) != string.Empty) return;
                     break;
                 case 5:

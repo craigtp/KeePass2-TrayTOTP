@@ -13,11 +13,11 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private TrayTotpGTExt plugin = null;
+        private readonly TrayTotpGTExt plugin;
         /// <summary>
         /// KeePass Host.
         /// </summary>
-        private IPluginHost m_host = null;
+        private readonly IPluginHost m_host;
 
         /// <summary>
         /// Windows Form Constructor.
@@ -37,11 +37,11 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormAbout_Load(object sender, EventArgs e)
         {
-            this.Text = TrayTotpGTExt.strAbout + " - " + TrayTotpGTExt.strTrayTotpPlugin;
+            this.Text = TrayTotpGTExt.strAbout + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin;
             ListViewAbout.Items[0].SubItems.Add(AssemblyTitle);
             ListViewAbout.Items[1].SubItems.Add(AssemblyCompany);
             ListViewAbout.Items[2].SubItems.Add(AssemblyVersion);
-            ListViewAbout.Items[3].SubItems.Add(new System.IO.FileInfo(Assembly.GetExecutingAssembly().Location).LastWriteTime.ToString());
+            ListViewAbout.Items[3].SubItems.Add(TrayTotpGTExt.strBuildDate);
             ListViewAbout.Items[4].SubItems.Add(TrayTotpGTExt.strEmail);
             LabelCopyright.Text = AssemblyCopyright;
         }

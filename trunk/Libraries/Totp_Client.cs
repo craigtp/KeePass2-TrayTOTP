@@ -290,10 +290,9 @@ namespace OtpProviderClient
         public static string Encode(byte[] data)
         {
             if (data == null)
-                throw new ArgumentNullException("data");
-
+                throw new ArgumentNullException();
             if (data.Length == 0)
-                throw new ArgumentException("data must not be empty");
+                throw new ArgumentNullException();
 
             // The output character count is calculated in 40 bit blocks.  That is because the least
             // common blocks size for both binary (8 bit) and base 32 (5 bit) is 40.  Padding must be used
@@ -344,14 +343,13 @@ namespace OtpProviderClient
         public static byte[] Decode(string base32)
         {
             if (string.IsNullOrEmpty(base32))
-                throw new ArgumentNullException("base32");
+                throw new ArgumentNullException();
 
             var unpaddedBase32 = base32.ToUpperInvariant().TrimEnd('=');
-
             foreach (var c in unpaddedBase32)
             {
                 if (encodingChars.IndexOf(c) < 0)
-                    throw new ArgumentException("base32 contains illegal characters");
+                    throw new ArgumentException("Base32 contains illegal characters.");
             }
 
             // we have already removed the padding so this will tell us how many actual bytes there should be.
