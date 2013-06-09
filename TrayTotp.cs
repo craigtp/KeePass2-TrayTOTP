@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
-using System.IO;
 using System.Linq;
 using System.Drawing;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Windows.Forms;
+using System.ComponentModel;
+using System.Collections.Generic;
 
 using OtpProviderClient;
 
@@ -21,22 +19,22 @@ using KeePass.Util;
 using KeePass.Util.Spr;
 
 using KeePassLib;
-using KeePassLib.Collections;
-using KeePassLib.Cryptography.Cipher;
-using KeePassLib.Cryptography.PasswordGenerator;
-using KeePassLib.Interfaces;
 using KeePassLib.Utility;
 using KeePassLib.Security;
 using KeePassLib.Delegates;
+using KeePassLib.Resources;
+using KeePassLib.Interfaces;
+using KeePassLib.Collections;
 using KeePassLib.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
+using KeePassLib.Cryptography.Cipher;
+using KeePassLib.Cryptography.PasswordGenerator;
 
 namespace TrayTotpGT
 {
     /// <summary>
     /// Main Plugin Class
     /// </summary>
-    internal sealed class TrayTotpGTExt : Plugin
+    internal sealed partial class TrayTotpGTExt : Plugin
     {
         /// <summary>
         /// Plugin host Global Reference for access to KeePass functions.
@@ -58,12 +56,17 @@ namespace TrayTotpGT
         internal const string strNoTotpFound = "No TOTP Seed found!";
         internal const string strDatabaseNotOpen = "Database is not open!";
         internal const string strDatabaseIsLocked = "Database is locked!";
-        internal const string strWarningBadUrl = "Warning, Bad URL?";
-        internal const string strWarningBadSet = "Error, Bad set!";
-        internal const string strWarningNotSet = "Error, Not set!";
-        internal const string strWarningStorage = "Error, Storage!";
-        internal const string strConnectionFailed = "Connection failed!";
+        internal const string strWarningBadUrl = "Warning, bad URL?";
+        internal const string strWarningBadSet = "Error, bad settings!";
+        internal const string strWarningBadSeed = "Error, bad seed!";
+        internal const string strWarningNotSet = "Error, no settings!";
+        internal const string strWarningStorage = "Error, storage!";
+        internal const string strBuildDate = "2013/06/08";
         internal const string strEmail = "traytotp@gartech.ca";
+        /// <summary>
+        /// Constants (plugin display texts).
+        /// </summary>
+        internal const string strSpaceDashSpace = " - ";
         /// <summary>
         /// Constants (keepass form object names).
         /// </summary>
@@ -109,45 +112,41 @@ namespace TrayTotpGT
         /// <summary>
         /// Tools Menu Tray Totp Plugin.
         /// </summary>
-        private ToolStripMenuItem toMenuTrayTotp = null;
-        /// <summary>
-        /// Tools Menu Tray Totp Plugin Seperator.
-        /// </summary>
-        private ToolStripSeparator toMenuSeperator1 = null;
+        private ToolStripMenuItem toMenuTrayTotp;
         /// <summary>
         /// Tools Menu Tray Totp Settings.
         /// </summary>
-        private ToolStripMenuItem toSubMenuSettings = null;
+        private ToolStripMenuItem toSubMenuSettings;
         /// <summary>
         /// Tools Menu Tray Totp Settings Seperator.
         /// </summary>
-        private ToolStripSeparator toSubMenuSeperator1 = null;
+        private ToolStripSeparator toSubMenuSeperator1;
         /// <summary>
         /// Tools Menu Tray Totp Help.
         /// </summary>
-        private ToolStripMenuItem toSubMenuHelp = null;
+        private ToolStripMenuItem toSubMenuHelp;
         /// <summary>
         /// Tools Menu Tray Totp About.
         /// </summary>
-        private ToolStripMenuItem toSubMenuAbout = null;
+        private ToolStripMenuItem toSubMenuAbout;
 
         /// <summary>
         /// Entry Context Menu Copy.
         /// </summary>
-        private ToolStripMenuItem enMenuCopyTotp = null;
+        private ToolStripMenuItem enMenuCopyTotp;
         /// <summary>
         /// Entry Context Menu Setup.
         /// </summary>
-        private ToolStripMenuItem enMenuSetupTotp = null;
+        private ToolStripMenuItem enMenuSetupTotp;
         /// <summary>
         /// Entry Context Menu Setup Seperator.
         /// </summary>
-        private ToolStripSeparator enMenuSeperator = null;
+        private ToolStripSeparator enMenuSeperator;
 
         /// <summary>
         /// Notify Icon Context Menu Title.
         /// </summary>
-        private ToolStripMenuItem niMenuTitle = null;
+        private ToolStripMenuItem niMenuTitle;
         /// <summary>
         /// Notify Icon Context Menu List.
         /// </summary>
@@ -160,7 +159,7 @@ namespace TrayTotpGT
         /// <summary>
         /// Entries Column TOTP.
         /// </summary>
-        private columnProviderTOTP liColumnTotp = null;
+        private TrayTotp_CustomColumn liColumnTotp = null;
 
         /// <summary>
         /// Entry List Column Count.
@@ -233,8 +232,6 @@ namespace TrayTotpGT
             m_host.MainWindow.Shown += MainWindow_Shown;
 
             //Tools Menus.
-            toMenuSeperator1 = new ToolStripSeparator();
-            m_host.MainWindow.ToolsMenu.DropDownItems.Add(toMenuSeperator1);
             toMenuTrayTotp = new ToolStripMenuItem(strTrayTotpPlugin);
             toMenuTrayTotp.Image = Properties.Resources.TOTP;
             m_host.MainWindow.ToolsMenu.DropDownItems.Add(toMenuTrayTotp);
@@ -285,7 +282,7 @@ namespace TrayTotpGT
             }
 
             //List Column TOTP.
-            liColumnTotp = new columnProviderTOTP(this);
+            liColumnTotp = new TrayTotp_CustomColumn(this);
             m_host.ColumnProviderPool.Add(liColumnTotp);
 
             //Refresh Timer.
@@ -415,6 +412,7 @@ namespace TrayTotpGT
             {
                 var FormWizard = new FormSetup(this, m_host.MainWindow.GetSelectedEntry(true));
                 FormWizard.ShowDialog();
+                m_host.MainWindow.RefreshEntriesList();
             }
         }
 
@@ -440,7 +438,7 @@ namespace TrayTotpGT
                     {
                         if (SettingsCheck(Entry) && SeedCheck(Entry))
                         {
-                            var NewMenu = new ToolStripMenuItem(Entry.Strings.ReadSafe(PwDefs.TitleField).ToString().ExtWithSpaceAfter() + Entry.Strings.ReadSafe(PwDefs.UserNameField).ToString().ExtWithParenthesis(), Properties.Resources.TOTP_Key, OnEntryMenuTotpClick);
+                            var NewMenu = new ToolStripMenuItem(Entry.Strings.ReadSafe(PwDefs.TitleField).ExtWithSpaceAfter() + Entry.Strings.ReadSafe(PwDefs.UserNameField).ExtWithParenthesis(), Properties.Resources.TOTP_Key, OnEntryMenuTotpClick);
                             NewMenu.Tag = Entry;
                             if (!SettingsValidate(Entry))
                             {
@@ -561,22 +559,46 @@ namespace TrayTotpGT
                         bool ValidInterval = false; bool ValidLength = false; bool ValidUrl = false;
                         if (SettingsValidate(e.Context.Entry, out ValidInterval, out ValidLength, out ValidUrl))
                         {
+                            bool NoTimeCorrection = false;
                             string[] Settings = SettingsGet(e.Context.Entry);
                             var TotpGenerator = new Totp_Provider(Convert.ToInt16(Settings[0]), Convert.ToInt16(Settings[1]));
                             if (ValidUrl)
                             {
-                                var TimeCorrection = TimeCorrections[Settings[2]];
-                                if (TimeCorrection == null) MessageBox.Show(strWarningBadUrl);
-                                TotpGenerator.TimeCorrection = TimeCorrection.TimeCorrection;
+                                var CurrentTimeCorrection = TimeCorrections[Settings[2]];
+                                if (CurrentTimeCorrection != null)
+                                {
+                                    TotpGenerator.TimeCorrection = CurrentTimeCorrection.TimeCorrection;
+                                }
+                                else
+                                {
+                                    TotpGenerator.TimeCorrection = TimeSpan.Zero;
+                                    NoTimeCorrection = true;
+                                }
                             }
-                            e.Context.Entry.Touch(false);
-                            e.Text = StrUtil.ReplaceCaseInsensitive(e.Text, m_host.CustomConfig.GetString(setname_string_AutoType_FieldName, setdef_string_AutoType_FieldName).ExtWithBrackets(), TotpGenerator.Generate(Base32.Decode(SeedGet(e.Context.Entry).ReadString().ExtWithoutSpaces())));
-                            return;
+                            string InvalidCharacters;
+                            if (SeedValidate(e.Context.Entry, out InvalidCharacters))
+                            {
+                                e.Context.Entry.Touch(false);
+                                e.Text = StrUtil.ReplaceCaseInsensitive(e.Text, m_host.CustomConfig.GetString(setname_string_AutoType_FieldName,setdef_string_AutoType_FieldName).ExtWithBrackets(),TotpGenerator.Generate(Base32.Decode(SeedGet(e.Context.Entry).ReadString().ExtWithoutSpaces())));
+                            }
+                            else
+                            {
+                                e.Text = string.Empty;
+                                MessageService.ShowWarning(strWarningBadSeed + InvalidCharacters.ExtWithParenthesis().ExtWithSpaceBefore());
+                            }
+                            if (NoTimeCorrection) MessageService.ShowWarning(strWarningBadUrl);
                         }
-                        MessageBox.Show(strWarningBadSet);
-                        return;
+                        else
+                        {
+                            e.Text = string.Empty;
+                            MessageService.ShowWarning(strWarningBadSet);
+                        }
                     }
-                    MessageBox.Show(strWarningNotSet);
+                    else
+                    {
+                        e.Text = string.Empty;
+                        MessageService.ShowWarning(strWarningNotSet);
+                    }
                 }
             }
         }
@@ -598,7 +620,7 @@ namespace TrayTotpGT
         /// <returns>Error(s) while validating Interval or Length.</returns>
         internal bool SettingsValidate(PwEntry pe)
         {
-            bool ValidInterval = false; bool ValidLength = false; bool ValidUrl = false; //Dummies
+            bool ValidInterval; bool ValidLength ; bool ValidUrl; //Dummies
             return SettingsValidate(pe, out ValidInterval, out ValidLength, out ValidUrl);
         }
 
@@ -610,7 +632,7 @@ namespace TrayTotpGT
         /// <returns>Error(s) while validating Interval or Length.</returns>
         internal bool SettingsValidate(PwEntry pe, out bool IsUrlValid)
         {
-            bool ValidInterval = false; bool ValidLength = false; //Dummies
+            bool ValidInterval; bool ValidLength; //Dummies
             return SettingsValidate(pe, out ValidInterval, out ValidLength, out IsUrlValid);
         }
 
@@ -686,6 +708,28 @@ namespace TrayTotpGT
         }
 
         /// <summary>
+        /// Validates the entry's Seed making sure it's a valid Base32 string.
+        /// </summary>
+        /// <param name="PasswordEntry">Password Entry.</param>
+        /// <returns>Validity of the Seed's characters for Base32 format.</returns>
+        internal bool SeedValidate(PwEntry PasswordEntry)
+        {
+            string InvalidCharacters;
+            return SeedGet(PasswordEntry).ReadString().ExtWithoutSpaces().ExtIsBase32(out InvalidCharacters);
+        }
+
+        /// <summary>
+        /// Validates the entry's Seed making sure it's a valid Base32 string. Invalid characters are available as out string.
+        /// </summary>
+        /// <param name="PasswordEntry">Password Entry.</param>
+        /// <param name="InvalidChars">Password Entry.</param>
+        /// <returns>Validity of the Seed's characters.</returns>
+        internal bool SeedValidate(PwEntry PasswordEntry, out string InvalidChars)
+        {
+            return SeedGet(PasswordEntry).ReadString().ExtWithoutSpaces().ExtIsBase32(out InvalidChars);
+        }
+
+        /// <summary>
         /// Get the entry's Seed using the string name specified in the settings (or default).
         /// </summary>
         /// <param name="pe">Password Entry.</param>
@@ -703,124 +747,46 @@ namespace TrayTotpGT
         {
             if (SettingsCheck(pe) && SeedCheck(pe))
             {
-                bool ValidInterval = false;
-                bool ValidLength = false;
-                bool ValidUrl = false;
+                bool ValidInterval; bool ValidLength; bool ValidUrl;
                 if (SettingsValidate(pe, out ValidInterval, out ValidLength, out ValidUrl))
                 {
+                    bool NoTimeCorrection = false;
                     string[] Settings = SettingsGet(pe);
                     var TotpGenerator = new Totp_Provider(Convert.ToInt16(Settings[0]), Convert.ToInt16(Settings[1]));
                     if (ValidUrl)
                     {
-                        var TimeCorrection = TimeCorrections[Settings[2]];
-                        if (TimeCorrection == null) MessageBox.Show(strWarningBadUrl);
-                        TotpGenerator.TimeCorrection = TimeCorrection.TimeCorrection;
-                    }
-                    pe.Touch(false);
-                    KeePass.Util.ClipboardUtil.CopyAndMinimize(TotpGenerator.Generate(Base32.Decode(SeedGet(pe).ReadString().ExtWithoutSpaces())), true, m_host.MainWindow, pe, m_host.MainWindow.ActiveDatabase);
-                    m_host.MainWindow.StartClipboardCountdown();
-                    return;
-                }
-                MessageBox.Show(strWarningBadSet);
-                return;
-            }
-            MessageBox.Show(strWarningNotSet);
-        }
-
-        /// <summary>
-        /// Custom column for TOTP generation directly from entry.
-        /// </summary>
-        private sealed class columnProviderTOTP : ColumnProvider
-        {
-            /// <summary>
-            /// Reference to the plugin host for access to KeePass functions.
-            /// </summary>
-            private IPluginHost m_host = null;
-            /// <summary>
-            /// Reference to the main plugin class.
-            /// </summary>
-            private TrayTotpGTExt plugin = null;
-
-            /// <summary>
-            /// Provides support to add a custom column to KeePass, in this case the Totp Provider Column.
-            /// </summary>
-            /// <param name="Plugin">Handle to the plugin class.</param>
-            internal columnProviderTOTP(TrayTotpGTExt Plugin)
-            {
-                plugin = Plugin;
-                m_host = plugin.m_host;
-            }
-
-            /// <summary>
-            /// Column Names, in the case this provider handles more than one column.
-            /// </summary>
-            private string[] ColumnName = new string[] { strTotp };
-            /// <summary>
-            /// Informs Keepass of the Column Names, in the case this provider handles more than one column.
-            /// </summary>
-            public override string[] ColumnNames
-            {
-                get { return ColumnName; }
-            }
-
-            /// <summary>
-            /// Informs KeePass what alignment the column's data should have.
-            /// </summary>
-            public override HorizontalAlignment TextAlign
-            {
-                get { return HorizontalAlignment.Left; }
-            }
-
-            /// <summary>
-            /// Tells KeePass what to display in the column.
-            /// </summary>
-            /// <param name="strColumnName"></param>
-            /// <param name="pe"></param>
-            /// <returns>String displayed in the columns.</returns>
-            public override string GetCellData(string strColumnName, PwEntry pe)
-            {
-                if (strColumnName == null) throw new ArgumentNullException("strColumnName");
-                if (pe == null) throw new ArgumentNullException("pe");
-                if (plugin.SettingsCheck(pe) && plugin.SeedCheck(pe))
-                {
-                    bool ValidInterval = false; bool ValidLength = false; bool ValidUrl = false;
-                    if (plugin.SettingsValidate(pe, out ValidInterval, out ValidLength, out ValidUrl))
-                    {
-                        string[] Settings = plugin.SettingsGet(pe);
-                        var TotpGenerator = new Totp_Provider(Convert.ToInt16(Settings[0]), Convert.ToInt16(Settings[1]));
-                        if (ValidUrl)
+                        var CurrentTimeCorrection = TimeCorrections[Settings[2]];
+                        if (CurrentTimeCorrection != null)
                         {
-                            var TimeCorrection = plugin.TimeCorrections[Settings[2]];
-                            if (TimeCorrection == null) return strWarningBadUrl;
-                            TotpGenerator.TimeCorrection = TimeCorrection.TimeCorrection;
+                            TotpGenerator.TimeCorrection = CurrentTimeCorrection.TimeCorrection;
                         }
-                        return TotpGenerator.Generate(Base32.Decode(plugin.SeedGet(pe).ReadString().ExtWithoutSpaces())) + (m_host.CustomConfig.GetBool(setname_bool_TotpColumnTimer_Visible, true) ? TotpGenerator.Timer.ToString().ExtWithParenthesis().ExtWithSpaceBefore() : string.Empty);
+                        else
+                        {
+                            TotpGenerator.TimeCorrection = TimeSpan.Zero;
+                            NoTimeCorrection = true;
+                        }
                     }
-                    return strWarningBadSet;
+                    string InvalidCharacters;
+                    if (SeedValidate(pe, out InvalidCharacters))
+                    {
+                        pe.Touch(false);
+                        ClipboardUtil.CopyAndMinimize(TotpGenerator.Generate(Base32.Decode(SeedGet(pe).ReadString().ExtWithoutSpaces())), true, m_host.MainWindow, pe, m_host.MainWindow.ActiveDatabase);
+                        m_host.MainWindow.StartClipboardCountdown();
+                    }
+                    else
+                    {
+                        MessageService.ShowWarning(strWarningBadSeed + InvalidCharacters.ExtWithParenthesis().ExtWithSpaceBefore());
+                    }
+                    if (NoTimeCorrection) MessageService.ShowWarning(strWarningBadUrl);
                 }
-                return (plugin.SettingsCheck(pe) || plugin.SeedCheck(pe) ? strWarningStorage : string.Empty);
+                else
+                {
+                    MessageService.ShowWarning(strWarningBadSet);
+                }
             }
-
-            /// <summary>
-            /// Informs KeePass if PerformCellAction must be called when the cell is double clicked.
-            /// </summary>
-            /// <param name="strColumnName">Column Name.</param>
-            /// <returns></returns>
-            public override bool SupportsCellAction(string strColumnName)
+            else
             {
-                if (strColumnName == null) throw new ArgumentNullException("strColumnName");
-                return true;
-            }
-
-            /// <summary>
-            /// Happens when a cell of the column is double-clicked.
-            /// </summary>
-            /// <param name="strColumnName">Column's name.</param>
-            /// <param name="pe">Entry associated with the clicked cell.</param>
-            public override void PerformCellAction(string strColumnName, PwEntry pe)
-            {
-                if (strColumnName == null) throw new ArgumentNullException("strColumnName");
-                if (m_host.CustomConfig.GetBool(setname_bool_TotpColumnCopy_Enable, true)) plugin.TotpCopyToClipboard(pe);
+                MessageService.ShowWarning(strWarningNotSet);
             }
         }
 
@@ -843,8 +809,6 @@ namespace TrayTotpGT
             m_host.MainWindow.Shown -= MainWindow_Shown;
 
             //Remove Tools Menus.
-            m_host.MainWindow.ToolsMenu.DropDownItems.Remove(toMenuSeperator1);
-            toMenuSeperator1.Dispose();
             m_host.MainWindow.ToolsMenu.DropDownItems.Remove(toMenuTrayTotp);
             toMenuTrayTotp.Dispose();
             m_host.MainWindow.ToolsMenu.DropDownItems.Remove(toSubMenuSettings);
@@ -896,249 +860,11 @@ namespace TrayTotpGT
         }
 
         /// <summary>
-        /// Returns update URL for KeepAss automatic update check.
+        /// Returns update URL for KeepAss automatic update check. (file must be UTF-8 without BOM (support for BOM fron KP 2.21))
         /// </summary>
         public override string UpdateUrl
         {
             get { return "http://gartech.byethost32.com/version_manifest.txt"; }
-        }
-
-        /// <summary>
-        /// Time_Correction Collection.
-        /// </summary>
-        internal class TimeCorrection_Collection : IEnumerable<TimeCorrection_Provider>
-        {
-            /// <summary>
-            /// Reference to the main plugin class.
-            /// </summary>
-            private TrayTotpGTExt plugin = null;
-            /// <summary>
-            /// Time Correction List.
-            /// </summary>
-            private List<TimeCorrection_Provider> TimeCorrections;
-            private bool _Enable;
-            /// <summary>
-            /// Enables or disables the Time Correction verification for all the collection items.
-            /// </summary>
-            internal bool Enable
-            {
-                get { return _Enable; }
-                set
-                {
-                    _Enable = value;
-                    foreach (var TimeCorrection in TimeCorrections)
-                    {
-                        TimeCorrection.Enable = value;
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Provides access to a specific collection item using the URL as a key.
-            /// </summary>
-            /// <param name="URL">URL.</param>
-            /// <returns></returns>
-            internal TimeCorrection_Provider this[string URL]
-            {
-                get
-                {
-                    foreach (var TimeCorrection in TimeCorrections)
-                    {
-                        if (TimeCorrection.Url == URL)
-                        {
-                            return TimeCorrection;
-                        }
-                    }
-                    return null;
-                }
-            }
-
-            /// <summary>
-            /// Handles Time Correction for TOTP Generators insuring generation accuracy.
-            /// </summary>
-            /// <param name="Plugin">Handle to the plugin's class.</param>
-            /// <param name="Enable">Enabled by Default.</param>
-            internal TimeCorrection_Collection(TrayTotpGTExt Plugin, bool Enable = true)
-            {
-                plugin = Plugin;
-                _Enable = Enable;
-                TimeCorrections = new List<TimeCorrection_Provider>();
-            }
-
-            /// <summary>
-            /// Populates the Time Correction Collection with the URLs in the specified string.
-            /// </summary>
-            /// <param name="URLs">URLs.</param>
-            internal void AddRangeFromString(string URLs)
-            {
-                foreach (var URL in URLs.Split(';'))
-                {
-                    //Validating that url is not null.
-                    if (URL != string.Empty)
-                    {
-                        //Validating that this server is not already checked.
-                        bool next = false;
-                        foreach (var TimeC in TimeCorrections)
-                        {
-                            if (TimeC.Url == URL)
-                            {
-                                next = true;
-                            }
-                        }
-                        //Adding server to time correction collection.
-                        if (!next) TimeCorrections.Add(new TimeCorrection_Provider(URL, _Enable));
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Populates the Time Correction Collection with the URL list specified.
-            /// </summary>
-            /// <param name="URLs">URLs.</param>
-            internal void AddRangeFromList(List<string> URLs)
-            {
-                foreach (var URL in URLs)
-                {
-                    //Validating that url is not null.
-                    if (URL != string.Empty)
-                    {
-                        //Validating that this server is not already checked.
-                        bool next = false;
-                        foreach (var TimeC in TimeCorrections)
-                        {
-                            if (TimeC.Url == URL)
-                            {
-                                next = true;
-                            }
-                        }
-                        //Adding server to time correction collection.
-                        if (!next) TimeCorrections.Add(new TimeCorrection_Provider(URL, _Enable));
-                    }
-                }
-            }
-            
-            /// <summary>
-            /// Clears the Time Correction Collection and populates it with the string specified.
-            /// </summary>
-            /// <param name="URLs">URLs.</param>
-            internal void ResetThenAddRangeFromString(string URLs)
-            {
-                TimeCorrections.Clear();
-                foreach (string URL in URLs.Split(';'))
-                {
-                    //Validating that url is not null.
-                    if (URL != string.Empty)
-                    {
-                        //Validating that this server is not already checked.
-                        bool next = false;
-                        foreach (var TimeC in TimeCorrections)
-                        {
-                            if (TimeC.Url == URL)
-                            {
-                                next = true;
-                            }
-                        }
-                        //Adding server to time correction collection.
-                        if (!next) TimeCorrections.Add(new TimeCorrection_Provider(URL, _Enable));
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Clears the Time Correction Collection and populates it with the Listviewitemcollection specified.
-            /// </summary>
-            /// <param name="LVIs">ListViewItem Collection containing all Time Correction Servers.</param>
-            internal void ResetThenAddRangeFromLVIs(ListView.ListViewItemCollection LVIs)
-            {
-                TimeCorrections.Clear();
-                foreach (ListViewItem LVI in LVIs)
-                {
-                    //Validating that url is not null.
-                    if (LVI.Text != string.Empty)
-                    {
-                        //Validating that this server is not already checked.
-                        bool next = false;
-                        foreach (var TimeC in TimeCorrections)
-                        {
-                            if (TimeC.Url == LVI.Text)
-                            {
-                                next = true;
-                            }
-                        }
-                        //Adding server to time correction collection.
-                        if (!next) TimeCorrections.Add(new TimeCorrection_Provider(LVI.Text, _Enable));
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Returns all URLs with their current timespan or connection status for adding to a listview.
-            /// </summary>
-            /// <returns>ListViewItem Array.</returns>
-            internal ListViewItem[] ToLVI()
-            {
-                //Temporary Listviewitem List to facilitate building the array.
-                var LVIs = new List<ListViewItem>();
-                foreach (var TC in TimeCorrections)
-                {
-                    //Create new Listviewitem to appear in Time Correction Settings Listview.
-                    var LVI = new ListViewItem(TC.Url);
-                    LVI.ImageIndex = TC.LastUpdateSucceded ? 0 : 2;
-                    LVI.SubItems.Add((TC.LastUpdateSucceded ? TC.TimeCorrection.ToString() : strConnectionFailed));
-                    LVI.Tag = TC;
-                    LVI.ToolTipText = (TC.LastUpdateSucceded ? string.Empty : TC.LastUpdateDateTime.ToString());
-                    LVIs.Add(LVI);
-                }
-                return LVIs.ToArray();
-            }
-
-            /// <summary>
-            /// Returns all URLs in a string array for adding range to combobox.
-            /// </summary>
-            /// <returns>String Array.</returns>
-            internal object[] ToComboBox()
-            {
-                //Temporary string List to facilitate building the array.
-                var Return = new List<string>();
-                foreach (var TimeCorrection in TimeCorrections)
-                {
-                    Return.Add(TimeCorrection.Url);
-                }
-                return Return.ToArray();
-            }
-
-            /// <summary>
-            /// Returns all URLs in one string in order to save them to KeePass settings.
-            /// </summary>
-            /// <returns>String seperated by a colon.</returns>
-            internal string ToSetting()
-            {
-                //Temporary string to build the string from multiple strings.
-                string Return = string.Empty;
-                foreach (var TimeCorrection in TimeCorrections)
-                {
-                    Return = Return + TimeCorrection.Url + ";";
-                }
-                return Return.TrimEnd(';');
-            }
-
-            /// <summary>
-            /// Support the enumeration of the collection to handle [foreach (var VARIABLE in...].
-            /// </summary>
-            /// <returns>Time Correction List Enumerator.</returns>
-            public IEnumerator<TimeCorrection_Provider> GetEnumerator()
-            {
-                return TimeCorrections.GetEnumerator();
-            }
-
-            /// <summary>
-            /// Support the enumeration of the collection to handle [foreach (TimeCorrection_Provider VARIABLE in...].
-            /// </summary>
-            /// <returns>Time Correction List Enumerator.</returns>
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return TimeCorrections.GetEnumerator();
-            }
         }
     }
 }

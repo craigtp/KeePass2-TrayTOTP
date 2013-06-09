@@ -747,7 +747,6 @@
             // 
             // WorkerReset
             // 
-            this.WorkerReset.WorkerSupportsCancellation = true;
             this.WorkerReset.DoWork += new System.ComponentModel.DoWorkEventHandler(this.WorkerReset_DoWork);
             this.WorkerReset.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.WorkerReset_RunWorkerCompleted);
             // 

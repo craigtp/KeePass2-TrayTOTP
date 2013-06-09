@@ -183,12 +183,13 @@
             // 
             this.CheckBoxSeedVisibility.AutoSize = true;
             this.HelpProviderSetup.SetHelpString(this.CheckBoxSeedVisibility, "Toggle\'s the display of the seed (hidden or visible).");
-            this.CheckBoxSeedVisibility.Location = new System.Drawing.Point(333, 92);
+            this.CheckBoxSeedVisibility.Location = new System.Drawing.Point(173, 114);
             this.CheckBoxSeedVisibility.Name = "CheckBoxSeedVisibility";
             this.HelpProviderSetup.SetShowHelp(this.CheckBoxSeedVisibility, true);
-            this.CheckBoxSeedVisibility.Size = new System.Drawing.Size(15, 14);
+            this.CheckBoxSeedVisibility.Size = new System.Drawing.Size(108, 17);
             this.CheckBoxSeedVisibility.TabIndex = 3;
             this.CheckBoxSeedVisibility.Tag = "";
+            this.CheckBoxSeedVisibility.Text = "Show TOTP Seed";
             this.CheckBoxSeedVisibility.UseVisualStyleBackColor = true;
             this.CheckBoxSeedVisibility.CheckedChanged += new System.EventHandler(this.CheckBoxSeedVisibility_CheckedChanged);
             // 
@@ -223,7 +224,7 @@
             this.TextBoxSeedSetup.MaxLength = 255;
             this.TextBoxSeedSetup.Name = "TextBoxSeedSetup";
             this.HelpProviderSetup.SetShowHelp(this.TextBoxSeedSetup, true);
-            this.TextBoxSeedSetup.Size = new System.Drawing.Size(175, 21);
+            this.TextBoxSeedSetup.Size = new System.Drawing.Size(179, 21);
             this.TextBoxSeedSetup.TabIndex = 2;
             this.TextBoxSeedSetup.Tag = "";
             this.TextBoxSeedSetup.UseSystemPasswordChar = true;

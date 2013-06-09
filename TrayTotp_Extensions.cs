@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace TrayTotpGT
 {
@@ -109,7 +110,7 @@ namespace TrayTotpGT
             {
                 try
                 {
-                    string Text = Extension;
+                    var Text = Extension;
                     if (Text.Contains(Seperator.ToString()))
                     {
                         return Text.Split(Seperator)[Index];
@@ -122,6 +123,41 @@ namespace TrayTotpGT
                 }
             }
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Makes sure the string provided as a Seed is Base32. Invalid characters are available as out string.
+        /// </summary>
+        /// <param name="Extension">Current string.</param>
+        /// <param name="InvalidChars">Invalid characters.</param>
+        /// <returns>Validity of the string's characters for Base32 format.</returns>
+        internal static bool ExtIsBase32(this string Extension, out string InvalidChars)
+        {
+            InvalidChars = null;
+            try
+            {
+                foreach (var CurrentChar in Extension)
+                {
+                    var CurrentCharValue = Char.GetNumericValue(CurrentChar);
+                    if (Char.IsLetter(CurrentChar))
+                    {
+                        continue;
+                    }
+                    if (Char.IsDigit(CurrentChar))
+                    {
+                        if ((CurrentCharValue > 1) && (CurrentCharValue < 8))
+                        {
+                            continue;
+                        }
+                    }
+                    InvalidChars = (InvalidChars + CurrentCharValue.ToString().ExtWithSpaceBefore()).Trim();
+                }
+            }
+            catch (Exception)
+            {
+                InvalidChars = "error";
+            }
+            return InvalidChars == null;
         }
     }
 }

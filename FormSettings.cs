@@ -13,11 +13,11 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private TrayTotpGTExt plugin = null;
+        private readonly TrayTotpGTExt plugin;
         /// <summary>
         /// KeePass Host.
         /// </summary>
-        private IPluginHost m_host = null;
+        private readonly IPluginHost m_host;
 
         /// <summary>
         /// Windows Form Constructor.
@@ -42,8 +42,8 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormSettings_Load(object sender, EventArgs e)
         {
-            this.Text = TrayTotpGTExt.strSettings + " - " + TrayTotpGTExt.strTrayTotpPlugin; //Set form's name using constants.
-            Working(true); //Set controls depending on the state of action.
+            Text = TrayTotpGTExt.strSettings + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin; //Set form's name using constants.
+            Working(true, true); //Set controls depending on the state of action.
             WorkerLoad.RunWorkerAsync(); //Load Settings in form controls.
         }
 
@@ -78,7 +78,7 @@ namespace TrayTotpGT
         {
             if (MessageBox.Show("Are you sure you want to reset all the settings to their default values?", TrayTotpGTExt.strTrayTotpPlugin, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                Working(true); //Set controls depending on the state of action.
+                Working(true, false); //Set controls depending on the state of action.
                 WorkerReset.RunWorkerAsync();
             }
         }
@@ -194,7 +194,7 @@ namespace TrayTotpGT
         private void ButtonOK_Click(object sender, EventArgs e)
         {
             if (HasErrors()) return;
-            Working(true); //Set controls depending on the state of action.
+            Working(true, true); //Set controls depending on the state of action.
             WorkerSave.RunWorkerAsync("OK");
         }
 
@@ -206,7 +206,7 @@ namespace TrayTotpGT
         private void ButtonApply_Click(object sender, EventArgs e)
         {
             if (HasErrors()) return;
-            Working(true); //Set controls depending on the state of action.
+            Working(true, true); //Set controls depending on the state of action.
             WorkerSave.RunWorkerAsync();
         }
 
@@ -230,12 +230,13 @@ namespace TrayTotpGT
             return temp;
         }
 
-        private void Working(bool Enable)
+        private void Working(bool Enable, bool Cancellable)
         {
-            this.UseWaitCursor = Enable;
+            UseWaitCursor = Enable;
             TabControlSettings.Enabled = !Enable;
-            ButtonReset.Enabled = false;//!Enable;
+            ButtonReset.Enabled = !Enable;
             ButtonOK.Enabled = !Enable;
+            ButtonCancel.Enabled = Cancellable;
             ButtonApply.Enabled = !Enable;
         }
 
@@ -290,12 +291,12 @@ namespace TrayTotpGT
         {
             if (e.Cancelled)
             {
-                this.DialogResult = DialogResult.Cancel;
-                this.Close();
+                DialogResult = DialogResult.Cancel;
+                Close();
             }
             else
             {
-                Working(false); //Set controls depending on the state of action.
+                Working(false, true); //Set controls depending on the state of action.
                 if (e.Result != null)
                 {
                     if (e.Result.ToString() == "Reset")
@@ -368,13 +369,13 @@ namespace TrayTotpGT
         {
             if (e.Cancelled)
             {
-                this.DialogResult = DialogResult.Cancel;
-                this.Close();
+                DialogResult = DialogResult.Cancel;
+                Close();
             }
             else
             {
-                Working(false); //Set controls depending on the state of action.
-                if (e.Result != null) if (e.Result.ToString() == "OK") this.DialogResult = DialogResult.OK;
+                Working(false, true); //Set controls depending on the state of action.
+                if (e.Result != null) if (e.Result.ToString() == "OK") DialogResult = DialogResult.OK;
             }
         }
 
@@ -384,12 +385,10 @@ namespace TrayTotpGT
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_EntryContextCopy_Visible, null);
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_EntryContextSetup_Visible, null);
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_NotifyContext_Visible, null);
-            if (WorkerReset.CancellationPending) { e.Cancel = true; return; }
 
             //TOTP Column
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TotpColumnCopy_Enable, null);
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TotpColumnTimer_Visible, null);
-            if (WorkerReset.CancellationPending) { e.Cancel = true; return; }
 
             //Auto-Type
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_AutoType_Enable, null);
@@ -410,32 +409,21 @@ namespace TrayTotpGT
             }
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_AutoType_FieldName, null);
             KeePass.Util.Spr.SprEngine.FilterPlaceholderHints.Add(NewAutoTypeFieldName);
-            if (WorkerReset.CancellationPending) { e.Cancel = true; return; }
 
             //Time Correction
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TimeCorrection_Enable, null);
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_ulong_TimeCorrection_RefreshTime, null);
             OtpProviderClient.TimeCorrection_Provider.Interval = Convert.ToInt16(TrayTotpGTExt.setdef_ulong_TimeCorrection_RefreshTime);
             plugin.TimeCorrections.ResetThenAddRangeFromString(string.Empty);
-            if (WorkerReset.CancellationPending) { e.Cancel = true; return; }
 
             //Storage
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, null);
             m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, null);
-            if (WorkerReset.CancellationPending) e.Cancel = true;
         }
 
         private void WorkerReset_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (e.Cancelled)
-            {
-                this.DialogResult = DialogResult.Cancel;
-                this.Close();
-            }
-            else
-            {
-                WorkerLoad.RunWorkerAsync("Reset");
-            }
+            WorkerLoad.RunWorkerAsync("Reset");
         }
     }
 }
