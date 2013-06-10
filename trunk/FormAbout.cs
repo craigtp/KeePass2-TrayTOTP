@@ -41,7 +41,7 @@ namespace TrayTotpGT
             ListViewAbout.Items[0].SubItems.Add(AssemblyTitle);
             ListViewAbout.Items[1].SubItems.Add(AssemblyCompany);
             ListViewAbout.Items[2].SubItems.Add(AssemblyVersion);
-            ListViewAbout.Items[3].SubItems.Add(TrayTotpGTExt.strBuildDate);
+            ListViewAbout.Items[3].SubItems.Add(AssemblyTrademark);
             ListViewAbout.Items[4].SubItems.Add(TrayTotpGTExt.strEmail);
             LabelCopyright.Text = AssemblyCopyright;
         }
@@ -122,6 +122,22 @@ namespace TrayTotpGT
                     return string.Empty;
                 }
                 return ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
+            }
+        }
+
+        /// <summary>
+        /// Gets the assembly's trademark
+        ///  </summary>
+        internal string AssemblyTrademark
+        {
+            get
+            {
+                object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTrademarkAttribute), false);
+                if (attributes.Length == 0)
+                {
+                    return string.Empty;
+                }
+                return ((AssemblyTrademarkAttribute)attributes[0]).Trademark;
             }
         }
 
