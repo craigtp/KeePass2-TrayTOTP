@@ -61,7 +61,6 @@ namespace TrayTotpGT
         internal const string strWarningBadSeed = "Error, bad seed!";
         internal const string strWarningNotSet = "Error, no settings!";
         internal const string strWarningStorage = "Error, storage!";
-        internal const string strBuildDate = "2013/06/08";
         internal const string strEmail = "traytotp@gartech.ca";
         /// <summary>
         /// Constants (plugin display texts).
@@ -864,7 +863,7 @@ namespace TrayTotpGT
         /// </summary>
         public override string UpdateUrl
         {
-            get { return "http://gartech.byethost32.com/version_manifest.txt"; }
+            get { return "http://traytotp-kp2.sourceforge.net/version_manifest.txt"; }
         }
     }
 }
