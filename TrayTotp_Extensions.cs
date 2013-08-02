@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace TrayTotpGT
 {
@@ -155,7 +154,7 @@ namespace TrayTotpGT
             }
             catch (Exception)
             {
-                InvalidChars = "error";
+                InvalidChars = TrayTotp_Extensions_Localization.Error;
             }
             return InvalidChars == null;
         }

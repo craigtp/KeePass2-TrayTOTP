@@ -5,8 +5,6 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using OtpProviderClient;
-
 using KeePass.App;
 using KeePass.App.Configuration;
 using KeePass.DataExchange;
@@ -29,6 +27,8 @@ using KeePassLib.Serialization;
 using KeePassLib.Cryptography.Cipher;
 using KeePassLib.Cryptography.PasswordGenerator;
 
+using OtpProviderClient;
+
 namespace TrayTotpGT
 {
     /// <summary>
@@ -42,30 +42,9 @@ namespace TrayTotpGT
         internal IPluginHost m_host = null;
 
         /// <summary>
-        /// Constants (plugin display texts).
+        /// Tray Totp Support Email
         /// </summary>
-        internal const string strTrayTotpPlugin = "Tray Totp Plugin";
-        internal const string strSettings = "Settings";
-        internal const string strTimeCorrection = "Time Correction";
-        internal const string strSetup = "Setup";
-        internal const string strHelp = "Help";
-        internal const string strAbout = "About";
-        internal const string strTotp = "TOTP";
-        internal const string strCopyTotp = "Copy TOTP";
-        internal const string strSetupTotp = "Setup TOTP";
-        internal const string strNoTotpFound = "No TOTP Seed found!";
-        internal const string strDatabaseNotOpen = "Database is not open!";
-        internal const string strDatabaseIsLocked = "Database is locked!";
-        internal const string strWarningBadUrl = "Warning, bad URL?";
-        internal const string strWarningBadSet = "Error, bad settings!";
-        internal const string strWarningBadSeed = "Error, bad seed!";
-        internal const string strWarningNotSet = "Error, no settings!";
-        internal const string strWarningStorage = "Error, storage!";
         internal const string strEmail = "traytotp@gartech.ca";
-        /// <summary>
-        /// Constants (plugin display texts).
-        /// </summary>
-        internal const string strSpaceDashSpace = " - ";
         /// <summary>
         /// Constants (keepass form object names).
         /// </summary>
@@ -96,8 +75,6 @@ namespace TrayTotpGT
         /// </summary>
         internal const string setdef_string_AutoType_FieldName = "TOTP";
         internal const long setdef_ulong_TimeCorrection_RefreshTime = 60;
-        internal const string setdef_string_TotpSeed_StringName = "TOTP Seed";
-        internal const string setdef_string_TotpSettings_StringName = "TOTP Settings";
         /// <summary>
         /// Constants (static settings value).
         /// </summary>
@@ -231,32 +208,32 @@ namespace TrayTotpGT
             m_host.MainWindow.Shown += MainWindow_Shown;
 
             //Tools Menus.
-            toMenuTrayTotp = new ToolStripMenuItem(strTrayTotpPlugin);
+            toMenuTrayTotp = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strTrayTotpPlugin);
             toMenuTrayTotp.Image = Properties.Resources.TOTP;
             m_host.MainWindow.ToolsMenu.DropDownItems.Add(toMenuTrayTotp);
-            toSubMenuSettings = new ToolStripMenuItem(strSettings);
+            toSubMenuSettings = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strSettings);
             toSubMenuSettings.Image = Properties.Resources.TOTP_Settings;
             toSubMenuSettings.Click += OnMenuSettingsClick;
             toMenuTrayTotp.DropDownItems.Add(toSubMenuSettings);
             toSubMenuSeperator1 = new ToolStripSeparator();
             toMenuTrayTotp.DropDownItems.Add(toSubMenuSeperator1);
-            toSubMenuHelp = new ToolStripMenuItem(strHelp);
+            toSubMenuHelp = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strHelp);
             toSubMenuHelp.Image = Properties.Resources.TOTP_Help;
             toSubMenuHelp.Click += OnMenuHelpClick;
             toMenuTrayTotp.DropDownItems.Add(toSubMenuHelp);
-            toSubMenuAbout = new ToolStripMenuItem(strAbout + "...");
+            toSubMenuAbout = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strAbout + "...");
             toSubMenuAbout.Image = Properties.Resources.TOTP_Info;
             toSubMenuAbout.Click += OnMenuAboutClick;
             toMenuTrayTotp.DropDownItems.Add(toSubMenuAbout);
 
             //Entry Context Menus.
             m_host.MainWindow.EntryContextMenu.Opening += OnEntryMenuOpening;
-            enMenuCopyTotp = new ToolStripMenuItem(strCopyTotp);
+            enMenuCopyTotp = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strCopyTotp);
             enMenuCopyTotp.Image = Properties.Resources.TOTP;
             enMenuCopyTotp.ShortcutKeys = (Keys)Shortcut.CtrlT;
             enMenuCopyTotp.Click += OnEntryMenuTotpClick;
             m_host.MainWindow.EntryContextMenu.Items.Insert(m_host.MainWindow.EntryContextMenu.Items.IndexOfKey(keeobj_string_EntryContextMenuCopyPassword_Name) + 1, enMenuCopyTotp);
-            enMenuSetupTotp = new ToolStripMenuItem(strSetupTotp);
+            enMenuSetupTotp = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strSetupTotp);
             enMenuSetupTotp.Image = Properties.Resources.TOTP_Setup;
             enMenuSetupTotp.ShortcutKeys = (Keys)Shortcut.CtrlShiftI;
             enMenuSetupTotp.Click += OnEntryMenuSetupClick;
@@ -267,7 +244,7 @@ namespace TrayTotpGT
 
             //Notify Icon Context Menus.
             m_host.MainWindow.MainNotifyIcon.ContextMenuStrip.Opening += OnNotifyMenuOpening;
-            niMenuTitle = new ToolStripMenuItem(strTrayTotpPlugin);
+            niMenuTitle = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strTrayTotpPlugin);
             niMenuTitle.Image = Properties.Resources.TOTP;
             m_host.MainWindow.MainNotifyIcon.ContextMenuStrip.Items.Insert(0, niMenuTitle);
             niMenuSeperator = new ToolStripSeparator();
@@ -457,7 +434,7 @@ namespace TrayTotpGT
                     }
                     else
                     {
-                        var NewMenu = new ToolStripMenuItem(strNoTotpFound);
+                        var NewMenu = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strNoTotpFound);
                         NewMenu.Image = Properties.Resources.TOTP_None;
                         niMenuList.Add(NewMenu);
                         m_host.MainWindow.MainNotifyIcon.ContextMenuStrip.Items.Insert(1, niMenuList[0]);
@@ -467,14 +444,14 @@ namespace TrayTotpGT
                 {
                     if (m_host.MainWindow.IsFileLocked(null))
                     {
-                        var NewMenu = new ToolStripMenuItem(strDatabaseIsLocked);
+                        var NewMenu = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strDatabaseIsLocked);
                         NewMenu.Image = Properties.Resources.TOTP_Lock;
                         niMenuList.Add(NewMenu);
                         m_host.MainWindow.MainNotifyIcon.ContextMenuStrip.Items.Insert(1, niMenuList[0]);
                     }
                     else
                     {
-                        var NewMenu = new ToolStripMenuItem(strDatabaseNotOpen);
+                        var NewMenu = new ToolStripMenuItem(TrayTotp_Plugin_Localization.strDatabaseNotOpen);
                         NewMenu.Image = Properties.Resources.TOTP_Error;
                         niMenuList.Add(NewMenu);
                         m_host.MainWindow.MainNotifyIcon.ContextMenuStrip.Items.Insert(1, niMenuList[0]);
@@ -505,7 +482,7 @@ namespace TrayTotpGT
                     {
                         if (Column.Type == AceColumnType.PluginExt)
                         {
-                            if (Column.CustomName == strTotp)
+                            if (Column.CustomName == TrayTotp_Plugin_Localization.strTotp)
                             {
                                 liColumnTotpVisible = true;
                             }
@@ -583,20 +560,20 @@ namespace TrayTotpGT
                             else
                             {
                                 e.Text = string.Empty;
-                                MessageService.ShowWarning(strWarningBadSeed + InvalidCharacters.ExtWithParenthesis().ExtWithSpaceBefore());
+                                MessageService.ShowWarning(TrayTotp_Plugin_Localization.strWarningBadSeed + InvalidCharacters.ExtWithParenthesis().ExtWithSpaceBefore());
                             }
-                            if (NoTimeCorrection) MessageService.ShowWarning(strWarningBadUrl);
+                            if (NoTimeCorrection) MessageService.ShowWarning(TrayTotp_Plugin_Localization.strWarningBadUrl);
                         }
                         else
                         {
                             e.Text = string.Empty;
-                            MessageService.ShowWarning(strWarningBadSet);
+                            MessageService.ShowWarning(TrayTotp_Plugin_Localization.strWarningBadSet);
                         }
                     }
                     else
                     {
                         e.Text = string.Empty;
-                        MessageService.ShowWarning(strWarningNotSet);
+                        MessageService.ShowWarning(TrayTotp_Plugin_Localization.strWarningNotSet);
                     }
                 }
             }
@@ -609,7 +586,7 @@ namespace TrayTotpGT
         /// <returns>Presence of Settings.</returns>
         internal bool SettingsCheck(PwEntry pe)
         {
-            return pe.Strings.Exists(m_host.CustomConfig.GetString(setname_string_TotpSettings_StringName, setdef_string_TotpSettings_StringName));
+            return pe.Strings.Exists(m_host.CustomConfig.GetString(setname_string_TotpSettings_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSettings_StringName));
         }
 
         /// <summary>
@@ -693,7 +670,7 @@ namespace TrayTotpGT
         /// <returns>String Array (Interval, Length, Url).</returns>
         internal string[] SettingsGet(PwEntry pe)
         {
-            return pe.Strings.Get(m_host.CustomConfig.GetString(setname_string_TotpSettings_StringName, setdef_string_TotpSettings_StringName)).ReadString().Split(';');
+            return pe.Strings.Get(m_host.CustomConfig.GetString(setname_string_TotpSettings_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSettings_StringName)).ReadString().Split(';');
         }
 
         /// <summary>
@@ -703,7 +680,7 @@ namespace TrayTotpGT
         /// <returns>Presence of the Seed.</returns>
         internal bool SeedCheck(PwEntry pe)
         {
-            return pe.Strings.Exists(m_host.CustomConfig.GetString(setname_string_TotpSeed_StringName, setdef_string_TotpSeed_StringName));
+            return pe.Strings.Exists(m_host.CustomConfig.GetString(setname_string_TotpSeed_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSeed_StringName));
         }
 
         /// <summary>
@@ -735,7 +712,7 @@ namespace TrayTotpGT
         /// <returns>Protected Seed.</returns>
         internal ProtectedString SeedGet(PwEntry pe)
         {
-            return pe.Strings.Get(m_host.CustomConfig.GetString(setname_string_TotpSeed_StringName, setdef_string_TotpSeed_StringName));
+            return pe.Strings.Get(m_host.CustomConfig.GetString(setname_string_TotpSeed_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSeed_StringName));
         }
 
         /// <summary>
@@ -774,18 +751,18 @@ namespace TrayTotpGT
                     }
                     else
                     {
-                        MessageService.ShowWarning(strWarningBadSeed + InvalidCharacters.ExtWithParenthesis().ExtWithSpaceBefore());
+                        MessageService.ShowWarning(TrayTotp_Plugin_Localization.strWarningBadSeed + InvalidCharacters.ExtWithParenthesis().ExtWithSpaceBefore());
                     }
-                    if (NoTimeCorrection) MessageService.ShowWarning(strWarningBadUrl);
+                    if (NoTimeCorrection) MessageService.ShowWarning(TrayTotp_Plugin_Localization.strWarningBadUrl);
                 }
                 else
                 {
-                    MessageService.ShowWarning(strWarningBadSet);
+                    MessageService.ShowWarning(TrayTotp_Plugin_Localization.strWarningBadSet);
                 }
             }
             else
             {
-                MessageService.ShowWarning(strWarningNotSet);
+                MessageService.ShowWarning(TrayTotp_Plugin_Localization.strWarningNotSet);
             }
         }
 

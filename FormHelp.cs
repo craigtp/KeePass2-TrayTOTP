@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+
 using KeePass.Plugins;
 
 namespace TrayTotpGT
@@ -13,26 +14,21 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private readonly TrayTotpGTExt plugin;
-        /// <summary>
-        /// KeePass Host.
-        /// </summary>
-        private readonly IPluginHost m_host;
+        private readonly TrayTotpGTExt _plugin;
         /// <summary>
         /// Getting started flag.
         /// </summary>
-        private readonly bool _GettingStarted;
+        private readonly bool _gettingStarted;
 
         /// <summary>
         /// Windows Form Constructor.
         /// </summary>
-        /// <param name="Plugin">Plugin Host.</param>
-        /// <param name="GettingStarted">Getting Started Display Flag.</param>
-        internal FormHelp(TrayTotpGTExt Plugin, bool GettingStarted = false)
+        /// <param name="plugin">Plugin Host.</param>
+        /// <param name="gettingStarted">Getting Started Display Flag.</param>
+        internal FormHelp(TrayTotpGTExt plugin, bool gettingStarted = false)
         {
-            plugin = Plugin;
-            m_host = plugin.m_host;
-            _GettingStarted = GettingStarted;
+            _plugin = plugin;
+            _gettingStarted = gettingStarted;
             InitializeComponent();
         }
 
@@ -44,14 +40,14 @@ namespace TrayTotpGT
         private void FormHelp_Load(object sender, EventArgs e)
         {
             Size = new Size(550, 350);
-            Text = TrayTotpGTExt.strHelp + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin;
-            foreach (Control Ctl in SplitContainerHelp.Panel2.Controls)
+            Text = TrayTotp_Plugin_Localization.strHelp + TrayTotp_Plugin_Localization.strSpaceDashSpace + TrayTotp_Plugin_Localization.strTrayTotpPlugin;
+            foreach (Control ctl in SplitContainerHelp.Panel2.Controls)
             {
-                Ctl.Location = new Point(3,3);
-                Ctl.Size = new Size(SplitContainerHelp.Panel2.Width - 3, SplitContainerHelp.Panel2.Height - 3);
+                ctl.Location = new Point(3,3);
+                ctl.Size = new Size(SplitContainerHelp.Panel2.Width - 3, SplitContainerHelp.Panel2.Height - 3);
             }
             TreeViewHelp.ExpandAll();
-            TreeViewHelp.SelectedNode = _GettingStarted ? TreeViewHelp.Nodes["GettingStarted"] : TreeViewHelp.Nodes["Welcome"];
+            TreeViewHelp.SelectedNode = _gettingStarted ? TreeViewHelp.Nodes["GettingStarted"] : TreeViewHelp.Nodes["Welcome"];
         }
 
         /// <summary>

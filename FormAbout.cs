@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using System.Windows.Forms;
+
 using KeePass.Plugins;
 
 namespace TrayTotpGT
@@ -13,20 +14,16 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private readonly TrayTotpGTExt plugin;
-        /// <summary>
-        /// KeePass Host.
-        /// </summary>
-        private readonly IPluginHost m_host;
+        private readonly TrayTotpGTExt _plugin;
 
         /// <summary>
         /// Windows Form Constructor.
         /// </summary>
-        /// <param name="Plugin">Plugin Host.</param>
-        internal FormAbout(TrayTotpGTExt Plugin)
+        /// <param name="plugin">Plugin Host.</param>
+        internal FormAbout(TrayTotpGTExt plugin)
         {
-            plugin = Plugin;
-            m_host = plugin.m_host;
+
+            _plugin = plugin;
             InitializeComponent();
         }
 
@@ -37,7 +34,7 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormAbout_Load(object sender, EventArgs e)
         {
-            this.Text = TrayTotpGTExt.strAbout + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin;
+            Text = TrayTotp_Plugin_Localization.strAbout + TrayTotp_Plugin_Localization.strSpaceDashSpace + TrayTotp_Plugin_Localization.strTrayTotpPlugin;
             ListViewAbout.Items[0].SubItems.Add(AssemblyTitle);
             ListViewAbout.Items[1].SubItems.Add(AssemblyCompany);
             ListViewAbout.Items[2].SubItems.Add(AssemblyVersion);
@@ -56,7 +53,7 @@ namespace TrayTotpGT
                 object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false);
                 if (attributes.Length > 0)
                 {
-                    AssemblyTitleAttribute titleAttribute = (AssemblyTitleAttribute)attributes[0];
+                    var titleAttribute = (AssemblyTitleAttribute)attributes[0];
                     if (titleAttribute.Title != string.Empty)
                     {
                         return titleAttribute.Title;

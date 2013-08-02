@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+
 using KeePass.Plugins;
 using KeePassLib;
 using KeePassLib.Security;
@@ -14,11 +15,7 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private readonly TrayTotpGTExt plugin;
-        /// <summary>
-        /// KeePass Host.
-        /// </summary>
-        private readonly IPluginHost m_host;
+        private readonly TrayTotpGTExt _plugin;
         /// <summary>
         /// Current entry's reference.
         /// </summary>
@@ -30,8 +27,7 @@ namespace TrayTotpGT
         /// <param name="Plugin">Plugin Host.</param>
         internal FormSetup(TrayTotpGTExt Plugin, PwEntry Entry)
         {
-            plugin = Plugin; //Defines variable from argument.
-            m_host = plugin.m_host; //Defines variable from argument.
+            _plugin = Plugin; //Defines variable from argument.
             entry = Entry; //Defines variable from argument.
             InitializeComponent(); //Form Initialization.
         }
@@ -54,24 +50,24 @@ namespace TrayTotpGT
                 {
                     case 1:
                         //Welcome
-                        if (plugin.SettingsCheck(entry) || plugin.SeedCheck(entry)) //Checks if existing totp
+                        if (_plugin.SettingsCheck(entry) || _plugin.SeedCheck(entry)) //Checks if existing totp
                         {
                             ButtonBack.Text = "&Delete"; //Makes the back button the delete button.
                             ButtonBack.Visible = true; //Shows the back button.
-                            HelpProviderSetup.SetHelpString(ButtonBack, "Deletes the current TOTP settings.");
+                            HelpProviderSetup.SetHelpString(ButtonBack, FormSetup_Localization.SetupDelete);
                         }
                         else
                         {
                             ButtonBack.Visible = false; //Hides the back button.
                         }
-                        HelpProviderSetup.SetHelpString(ButtonNext, "Next step.");
+                        HelpProviderSetup.SetHelpString(ButtonNext, FormSetup_Localization.SetupNext);
                         //button next already focused
                         break;
                     case 2:
                         //Interval
                         ButtonBack.Text = "< &Back"; //Makes sure the back button is shown as the back button.
                         ButtonBack.Visible = true; //Shows the back button.
-                        HelpProviderSetup.SetHelpString(ButtonBack, "Previous step.");
+                        HelpProviderSetup.SetHelpString(ButtonBack, FormSetup_Localization.SetupPrevious);
                         //NumericIntervalSetup.Focus(); //Focus on the interval numeric.
                         break;
                     case 3:
@@ -85,7 +81,7 @@ namespace TrayTotpGT
                     case 5:
                         //Time Correction
                         ButtonNext.Text = "&Next >"; //Makes sure the next button is shown as the next button.
-                        HelpProviderSetup.SetHelpString(ButtonNext, "Next step.");
+                        HelpProviderSetup.SetHelpString(ButtonNext, FormSetup_Localization.SetupNext);
                         ComboBoxTimeCorrectionSetup.Focus(); //Focus on the time correction combobox.
                         break;
                     case 6:
@@ -93,7 +89,7 @@ namespace TrayTotpGT
                         ButtonBack.Enabled = true; //Shows the back button.
                         ButtonNext.Text = "&Proceed"; //Makes the next button the proceed button.
                         ButtonCancel.Enabled = true; //Enables the cancel button.
-                        HelpProviderSetup.SetHelpString(ButtonNext, "Create or applies changes to the current entry's TOTP Settings.");
+                        HelpProviderSetup.SetHelpString(ButtonNext, FormSetup_Localization.SetupProceed);
                         //button next already focused
                         break;
                     case 7:
@@ -101,7 +97,7 @@ namespace TrayTotpGT
                         ButtonBack.Enabled = false; //Hides the back button.
                         ButtonNext.Text = "&Finish"; //Makes the next button the finish button.
                         ButtonCancel.Enabled = false; //Disables the cancel button.
-                        HelpProviderSetup.SetHelpString(ButtonNext, "Closes the wizard.");
+                        HelpProviderSetup.SetHelpString(ButtonNext, FormSetup_Localization.SetupFinnish);
                         //button next already focused
                         break;
                 }
@@ -129,12 +125,12 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormSetup_Load(object sender, EventArgs e)
         {
-            this.Text = TrayTotpGTExt.strSetup + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin; //Set form's name using constants.
-            if (plugin.SettingsCheck(entry)) //Checks the the totp settings exists.
+            Text = TrayTotp_Plugin_Localization.strSetup + TrayTotp_Plugin_Localization.strSpaceDashSpace + TrayTotp_Plugin_Localization.strTrayTotpPlugin; //Set form's name using constants.
+            if (_plugin.SettingsCheck(entry)) //Checks the the totp settings exists.
             {
-                string[] Settings = plugin.SettingsGet(entry); //Gets the the existing totp settings.
+                string[] Settings = _plugin.SettingsGet(entry); //Gets the the existing totp settings.
                 bool ValidInterval = false; bool ValidLength = false; bool ValidUrl = false;
-                plugin.SettingsValidate(entry, out ValidInterval, out ValidLength, out ValidUrl); //Validates the settings value.
+                _plugin.SettingsValidate(entry, out ValidInterval, out ValidLength, out ValidUrl); //Validates the settings value.
                 if (ValidInterval) NumericIntervalSetup.Value = Convert.ToDecimal(Settings[0]); //Checks if interval is valid and sets interval numeric to the setting value.
                 if (ValidLength) //Checks if length is valid.
                 {
@@ -143,8 +139,8 @@ namespace TrayTotpGT
                 }
                 if (ValidUrl) ComboBoxTimeCorrectionSetup.Text = Settings[2]; //Checks if url is valid and sets time correction textbox to the setting value.
             }
-            if (plugin.SeedCheck(entry)) TextBoxSeedSetup.Text = plugin.SeedGet(entry).ReadString(); //Checks if the seed exists and sets seed textbox to the seed value.
-            ComboBoxTimeCorrectionSetup.Items.AddRange(plugin.TimeCorrections.ToComboBox()); //Gets existings time corrections and adds them in the combobox.
+            if (_plugin.SeedCheck(entry)) TextBoxSeedSetup.Text = _plugin.SeedGet(entry).ReadString(); //Checks if the seed exists and sets seed textbox to the seed value.
+            ComboBoxTimeCorrectionSetup.Items.AddRange(_plugin.TimeCorrections.ToComboBox()); //Gets existings time corrections and adds them in the combobox.
             CurrentStep = 1; //Initial step.
         }
 
@@ -173,40 +169,40 @@ namespace TrayTotpGT
                 case 2:
                     //Interval
                     ErrorProviderSetup.SetError(NumericIntervalSetup, string.Empty);
-                    if ((NumericIntervalSetup.Value < 1) || (NumericIntervalSetup.Value > 60)) ErrorProviderSetup.SetError(NumericIntervalSetup, "Interval must be between 1\nand 60 inclusively!");
+                    if ((NumericIntervalSetup.Value < 1) || (NumericIntervalSetup.Value > 60)) ErrorProviderSetup.SetError(NumericIntervalSetup, string.Format(FormSetup_Localization.SetupInterval1to60, Environment.NewLine));
                     if (ErrorProviderSetup.GetError(NumericIntervalSetup) != string.Empty) return;
                     break;
                 case 3:
                     //Length
                     ErrorProviderSetup.SetError(RadioButtonLength8Setup, string.Empty);
-                    if (!RadioButtonLength6Setup.Checked && !RadioButtonLength8Setup.Checked) ErrorProviderSetup.SetError(RadioButtonLength8Setup, "Length is mandatory!");
+                    if (!RadioButtonLength6Setup.Checked && !RadioButtonLength8Setup.Checked) ErrorProviderSetup.SetError(RadioButtonLength8Setup, FormSetup_Localization.SetupLengthMandatory);
                     if (ErrorProviderSetup.GetError(RadioButtonLength8Setup) != string.Empty) return;
                     break;
                 case 4:
                     //Seed
                     ErrorProviderSetup.SetError(TextBoxSeedSetup, string.Empty);
-                    if (TextBoxSeedSetup.Text == string.Empty) ErrorProviderSetup.SetError(TextBoxSeedSetup, "Seed cannot be empty!");
+                    if (TextBoxSeedSetup.Text == string.Empty) ErrorProviderSetup.SetError(TextBoxSeedSetup, FormSetup_Localization.SetupSeedCantBeEmpty);
                     string InvalidBase32Chars;
-                    if (!TextBoxSeedSetup.Text.ExtWithoutSpaces().ExtIsBase32(out InvalidBase32Chars)) ErrorProviderSetup.SetError(TextBoxSeedSetup, "Invalid character(" + InvalidBase32Chars + ")!");
+                    if (!TextBoxSeedSetup.Text.ExtWithoutSpaces().ExtIsBase32(out InvalidBase32Chars)) ErrorProviderSetup.SetError(TextBoxSeedSetup, FormSetup_Localization.SetupInvalidCharacter + "(" + InvalidBase32Chars + ")!");
                     if (ErrorProviderSetup.GetError(TextBoxSeedSetup) != string.Empty) return;
                     break;
                 case 5:
                     //Time Correction
                     ErrorProviderSetup.SetError(ComboBoxTimeCorrectionSetup, string.Empty);
-                    if (ComboBoxTimeCorrectionSetup.Text != string.Empty && !ComboBoxTimeCorrectionSetup.Text.StartsWith("http")) ErrorProviderSetup.SetError(ComboBoxTimeCorrectionSetup, "URL must include \"http\"!");
-                    if (ComboBoxTimeCorrectionSetup.Text != string.Empty && !ComboBoxTimeCorrectionSetup.Text.Contains("://")) ErrorProviderSetup.SetError(ComboBoxTimeCorrectionSetup, "Invalid URL!");
-                    if (ComboBoxTimeCorrectionSetup.Text.Contains(";")) ErrorProviderSetup.SetError(ComboBoxTimeCorrectionSetup, "Invalid character! (;)");
+                    if (ComboBoxTimeCorrectionSetup.Text != string.Empty && !ComboBoxTimeCorrectionSetup.Text.StartsWith("http")) ErrorProviderSetup.SetError(ComboBoxTimeCorrectionSetup, FormSetup_Localization.SetupUrlMustContainHttp);
+                    if (ComboBoxTimeCorrectionSetup.Text != string.Empty && !ComboBoxTimeCorrectionSetup.Text.Contains("://")) ErrorProviderSetup.SetError(ComboBoxTimeCorrectionSetup, FormSetup_Localization.SetupInvalidUrl);
+                    if (ComboBoxTimeCorrectionSetup.Text.Contains(";")) ErrorProviderSetup.SetError(ComboBoxTimeCorrectionSetup, FormSetup_Localization.SetupInvalidCharacter + " (;)");
                     if (ErrorProviderSetup.GetError(ComboBoxTimeCorrectionSetup) != string.Empty) return;
                     break;
                 case 6:
                     //Proceed
                     try
                     {
-                        entry.CreateBackup(m_host.MainWindow.ActiveDatabase);
-                        entry.Strings.Set(m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, TrayTotpGTExt.setdef_string_TotpSeed_StringName), new ProtectedString(true, TextBoxSeedSetup.Text));
-                        entry.Strings.Set(m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, TrayTotpGTExt.setdef_string_TotpSettings_StringName), new ProtectedString(false, NumericIntervalSetup.Value.ToString() + ";" + (RadioButtonLength6Setup.Checked ? "6" : (RadioButtonLength8Setup.Checked ? "8" : "6")) + (ComboBoxTimeCorrectionSetup.Text != string.Empty ? ";" : string.Empty) + ComboBoxTimeCorrectionSetup.Text));
+                        entry.CreateBackup(_plugin.m_host.MainWindow.ActiveDatabase);
+                        entry.Strings.Set(_plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSeed_StringName), new ProtectedString(true, TextBoxSeedSetup.Text));
+                        entry.Strings.Set(_plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSettings_StringName), new ProtectedString(false, NumericIntervalSetup.Value.ToString() + ";" + (RadioButtonLength6Setup.Checked ? "6" : (RadioButtonLength8Setup.Checked ? "8" : "6")) + (ComboBoxTimeCorrectionSetup.Text != string.Empty ? ";" : string.Empty) + ComboBoxTimeCorrectionSetup.Text));
                         entry.Touch(true);
-                        m_host.MainWindow.ActiveDatabase.Modified = true;
+                        _plugin.m_host.MainWindow.ActiveDatabase.Modified = true;
                     }
                     catch (Exception Ex)
                     {
@@ -216,8 +212,8 @@ namespace TrayTotpGT
                     break;
                 case 7:
                     //Confirmation
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    DialogResult = DialogResult.OK;
+                    Close();
                     break;
             }
             CurrentStep++;
@@ -234,21 +230,21 @@ namespace TrayTotpGT
             {
                 case 1:
                     //Deletion
-                    if (MessageBox.Show("Are you sure you want to delete the current entry's TOTP settings?", TrayTotpGTExt.strTrayTotpPlugin, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                    if (MessageBox.Show(FormSetup_Localization.SetupMessageAskDeleteCurrentEntry, TrayTotp_Plugin_Localization.strTrayTotpPlugin, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                     {
                         try
                         {
-                            entry.CreateBackup(m_host.MainWindow.ActiveDatabase);
-                            entry.Strings.Remove(m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, TrayTotpGTExt.setdef_string_TotpSeed_StringName));
-                            entry.Strings.Remove(m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, TrayTotpGTExt.setdef_string_TotpSettings_StringName));
+                            entry.CreateBackup(_plugin.m_host.MainWindow.ActiveDatabase);
+                            entry.Strings.Remove(_plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSeed_StringName));
+                            entry.Strings.Remove(_plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSettings_StringName));
                             entry.Touch(true);
-                            m_host.MainWindow.ActiveDatabase.Modified = true;
+                            _plugin.m_host.MainWindow.ActiveDatabase.Modified = true;
                         }
                         catch (Exception)
                         {
                         }
-                        this.DialogResult = DialogResult.OK;
-                        this.Close();
+                        DialogResult = DialogResult.OK;
+                        Close();
 					}
                     return;
                 case 2:
