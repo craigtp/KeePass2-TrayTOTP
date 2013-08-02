@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Windows.Forms;
+
 using OtpProviderClient;
 
 namespace TrayTotpGT
@@ -11,10 +12,6 @@ namespace TrayTotpGT
     /// </summary>
     internal class TimeCorrection_Collection : IEnumerable<TimeCorrection_Provider>
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        internal const string strConnectionFailed = "Connection failed!";
         /// <summary>
         /// Reference to the main plugin class.
         /// </summary>
@@ -190,7 +187,7 @@ namespace TrayTotpGT
             {
                 //Create new Listviewitem to appear in Time Correction Settings Listview.
                 var LVI = new ListViewItem(TC.Url) { ImageIndex = TC.LastUpdateSucceded ? 0 : 2 };
-                LVI.SubItems.Add((TC.LastUpdateSucceded ? TC.TimeCorrection.ToString() : strConnectionFailed));
+                LVI.SubItems.Add((TC.LastUpdateSucceded ? TC.TimeCorrection.ToString() : TrayTotp_TimeCorrectionCollection_Localization.ConnectionFailed));
                 LVI.Tag = TC;
                 LVI.ToolTipText = (TC.LastUpdateSucceded ? String.Empty : TC.LastUpdateDateTime.ToString());
                 LVIs.Add(LVI);

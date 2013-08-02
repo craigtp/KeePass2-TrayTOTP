@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Windows.Forms;
+
 using KeePass.Plugins;
 
 namespace TrayTotpGT
@@ -13,27 +14,22 @@ namespace TrayTotpGT
         /// <summary>
         /// Plugin Host.
         /// </summary>
-        private readonly TrayTotpGTExt plugin;
-        /// <summary>
-        /// KeePass Host.
-        /// </summary>
-        private readonly IPluginHost m_host;
+        private readonly TrayTotpGTExt _plugin;
 
         /// <summary>
         /// Windows Form Constructor.
         /// </summary>
-        /// <param name="Plugin">Plugin Host.</param>
-        internal FormSettings(TrayTotpGTExt Plugin)
+        /// <param name="pPLUGIN">Plugin Host.</param>
+        internal FormSettings(TrayTotpGTExt pPLUGIN)
         {
-            plugin = Plugin; //Defines variable from argument.
-            m_host = plugin.m_host; //Defines variable from argument.
+            _plugin = pPLUGIN; //Defines variable from argument.
             InitializeComponent(); //Form Initialization.
         }
 
         /// <summary>
         /// Contains last network connection status. Is true by default to control user prompt.
         /// </summary>
-        private bool NetworkWasConnected = true;
+        private bool _networkWasConnected = true;
 
         /// <summary>
         /// Windows Form Load.
@@ -42,7 +38,7 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void FormSettings_Load(object sender, EventArgs e)
         {
-            Text = TrayTotpGTExt.strSettings + TrayTotpGTExt.strSpaceDashSpace + TrayTotpGTExt.strTrayTotpPlugin; //Set form's name using constants.
+            Text = TrayTotp_Plugin_Localization.strSettings + TrayTotp_Plugin_Localization.strSpaceDashSpace + TrayTotp_Plugin_Localization.strTrayTotpPlugin; //Set form's name using constants.
             Working(true, true); //Set controls depending on the state of action.
             WorkerLoad.RunWorkerAsync(); //Load Settings in form controls.
         }
@@ -76,7 +72,7 @@ namespace TrayTotpGT
 
         private void ButtonReset_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to reset all the settings to their default values?", TrayTotpGTExt.strTrayTotpPlugin, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            if (MessageBox.Show(FormSettings_Localization.SettingsAskResetDefaultValues, TrayTotp_Plugin_Localization.strTrayTotpPlugin, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
                 Working(true, false); //Set controls depending on the state of action.
                 WorkerReset.RunWorkerAsync();
@@ -101,21 +97,21 @@ namespace TrayTotpGT
         {
             if (CheckBoxAutoTypeFieldRename.Checked)
             {
-                if (!m_host.MainWindow.ActiveDatabase.IsOpen)
+                if (!_plugin.m_host.MainWindow.ActiveDatabase.IsOpen)
                 {
                     CheckBoxAutoTypeFieldRename.Checked = false;
-                    if (m_host.MainWindow.IsFileLocked(null))
+                    if (_plugin.m_host.MainWindow.IsFileLocked(null))
                     {
-                        MessageBox.Show("The currently opened database is locked! This function only works with an unlocked database.", TrayTotpGTExt.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show(FormSettings_Localization.SettingsCurrentDatabaseLocked, TrayTotp_Plugin_Localization.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
-                    MessageBox.Show("You must have an opened database in order to use this function.", TrayTotpGTExt.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(FormSettings_Localization.SettingsOpenDatabaseRequired, TrayTotp_Plugin_Localization.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
                 if (!CheckBoxAutoTypeFieldName.Checked)
                 {
                     CheckBoxAutoTypeFieldRename.Checked = false;
-                    MessageBox.Show("Please start by enabling \"Field rename\".", TrayTotpGTExt.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(FormSettings_Localization.SettingsEnableFieldRename, TrayTotp_Plugin_Localization.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
@@ -142,7 +138,7 @@ namespace TrayTotpGT
 
         private void ToolStripButtonAddTimeCorrection_Click(object sender, EventArgs e)
         {
-            var FormTC = new FormTimeCorrection(plugin);
+            var FormTC = new FormTimeCorrection(_plugin);
             if (FormTC.ShowDialog() == DialogResult.OK)
             {
                 ListViewTimeCorrectionList.Items.Add(FormTC.ComboBoxUrlTimeCorrection.Text, 0);
@@ -154,7 +150,7 @@ namespace TrayTotpGT
             if (ListViewTimeCorrectionList.SelectedItems.Count == 1)
             {
                 ListViewItem ThisItem = ListViewTimeCorrectionList.SelectedItems[0];
-                var FormTC = new FormTimeCorrection(plugin, ThisItem.Text);
+                var FormTC = new FormTimeCorrection(_plugin, ThisItem.Text);
                 if (FormTC.ShowDialog() == DialogResult.OK)
                 {
                     ThisItem.SubItems[0].Text = FormTC.ComboBoxUrlTimeCorrection.Text;
@@ -175,19 +171,19 @@ namespace TrayTotpGT
         private void ToolStripButtonRefreshTimeCorrection_Click(object sender, EventArgs e)
         {
             ListViewTimeCorrectionList.Items.Clear();
-            ListViewTimeCorrectionList.Items.AddRange(plugin.TimeCorrections.ToLVI());
-            if (!plugin.NetworkIsConnected)
+            ListViewTimeCorrectionList.Items.AddRange(_plugin.TimeCorrections.ToLVI());
+            if (!_plugin.NetworkIsConnected)
             {
-                if (NetworkWasConnected) MessageBox.Show("Warning, no internet connection detected!\n\nYou will not be able to add any server until you are connected.", TrayTotpGTExt.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (_networkWasConnected) MessageBox.Show(string.Format(FormSettings_Localization.SettingsNoInternetDetected, Environment.NewLine), TrayTotp_Plugin_Localization.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 ToolStripButtonAddTimeCorrection.Enabled = false;
                 ToolStripButtonPropertiesTimeCorrection.Enabled = false;
-                NetworkWasConnected = false;
+                _networkWasConnected = false;
             }
             else
             {
                 ToolStripButtonAddTimeCorrection.Enabled = true;
                 ToolStripButtonPropertiesTimeCorrection.Enabled = true;
-                NetworkWasConnected = true;
+                _networkWasConnected = true;
             }
         }
 
@@ -217,16 +213,16 @@ namespace TrayTotpGT
             ErrorProviderSettings.SetError(TextBoxAutoTypeFieldName, string.Empty);
             ErrorProviderSettings.SetError(ComboBoxTotpSeedStringName, string.Empty);
             ErrorProviderSettings.SetError(ComboBoxTotpSettingsStringName, string.Empty);
-            if (TextBoxAutoTypeFieldName.Text.Contains("{") || TextBoxAutoTypeFieldName.Text.Contains("}")) ErrorProviderSettings.SetError(TextBoxAutoTypeFieldName, "Invalid character!");
+            if (TextBoxAutoTypeFieldName.Text.Contains("{") || TextBoxAutoTypeFieldName.Text.Contains("}")) ErrorProviderSettings.SetError(TextBoxAutoTypeFieldName, FormSettings_Localization.SettingsInvalidCharacter);
             if (ComboBoxTotpSeedStringName.Text == ComboBoxTotpSettingsStringName.Text)
             {
-                ErrorProviderSettings.SetError(ComboBoxTotpSeedStringName, "Invalid name! Must be different than the Setting String.");
-                ErrorProviderSettings.SetError(ComboBoxTotpSettingsStringName, "Invalid name! Must be different than the Seed String.");
+                ErrorProviderSettings.SetError(ComboBoxTotpSeedStringName, FormSettings_Localization.SettingsInvalidNameSetting);
+                ErrorProviderSettings.SetError(ComboBoxTotpSettingsStringName, FormSettings_Localization.SettingsInvalidNameSeed);
             }
             if (ErrorProviderSettings.GetError(TextBoxAutoTypeFieldName) != string.Empty) temp = true;
             if (ErrorProviderSettings.GetError(ComboBoxTotpSeedStringName) != string.Empty) temp = true;
             if (ErrorProviderSettings.GetError(ComboBoxTotpSettingsStringName) != string.Empty) temp = true;
-            if (temp) ErrorProviderSettings.SetError(ButtonOK, "Errors detected!");
+            if (temp) ErrorProviderSettings.SetError(ButtonOK, FormSettings_Localization.SettingsErrors);
             return temp;
         }
 
@@ -246,31 +242,31 @@ namespace TrayTotpGT
             e.Result = e.Argument;
 
             //Menus
-            CheckBoxShowCopyTotpEntryMenu.Checked = m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_EntryContextCopy_Visible, true);
-            CheckBoxShowSetupTotpEntryMenu.Checked = m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_EntryContextSetup_Visible, true);
-            CheckBoxShowTotpEntriesTrayMenu.Checked = m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_NotifyContext_Visible, true);
+            CheckBoxShowCopyTotpEntryMenu.Checked = _plugin.m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_EntryContextCopy_Visible, true);
+            CheckBoxShowSetupTotpEntryMenu.Checked = _plugin.m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_EntryContextSetup_Visible, true);
+            CheckBoxShowTotpEntriesTrayMenu.Checked = _plugin.m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_NotifyContext_Visible, true);
             if (WorkerLoad.CancellationPending) { e.Cancel = true; return; }
 
             //TOTP Column
-            CheckBoxTotpColumnClipboard.Checked = m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_TotpColumnCopy_Enable, true);
-            CheckBoxTotpColumnTimer.Checked = m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_TotpColumnTimer_Visible, true);
+            CheckBoxTotpColumnClipboard.Checked = _plugin.m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_TotpColumnCopy_Enable, true);
+            CheckBoxTotpColumnTimer.Checked = _plugin.m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_TotpColumnTimer_Visible, true);
             if (WorkerLoad.CancellationPending) { e.Cancel = true; return; }
 
             //Auto-Type
-            CheckBoxAutoType.Checked = m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_AutoType_Enable, true);
-            TextBoxAutoTypeFieldName.Text = m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_AutoType_FieldName, TrayTotpGTExt.setdef_string_AutoType_FieldName);
+            CheckBoxAutoType.Checked = _plugin.m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_AutoType_Enable, true);
+            TextBoxAutoTypeFieldName.Text = _plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_AutoType_FieldName, TrayTotpGTExt.setdef_string_AutoType_FieldName);
             if (WorkerLoad.CancellationPending) { e.Cancel = true; return; }
 
             //Time Correction
-            CheckBoxTimeCorrection.Checked = m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_TimeCorrection_Enable, false);
-            NumericTimeCorrectionInterval.Value = Convert.ToDecimal(m_host.CustomConfig.GetULong(TrayTotpGTExt.setname_ulong_TimeCorrection_RefreshTime, TrayTotpGTExt.setdef_ulong_TimeCorrection_RefreshTime));
-            ListViewTimeCorrectionList.Items.AddRange(plugin.TimeCorrections.ToLVI());
+            CheckBoxTimeCorrection.Checked = _plugin.m_host.CustomConfig.GetBool(TrayTotpGTExt.setname_bool_TimeCorrection_Enable, false);
+            NumericTimeCorrectionInterval.Value = Convert.ToDecimal(_plugin.m_host.CustomConfig.GetULong(TrayTotpGTExt.setname_ulong_TimeCorrection_RefreshTime, TrayTotpGTExt.setdef_ulong_TimeCorrection_RefreshTime));
+            ListViewTimeCorrectionList.Items.AddRange(_plugin.TimeCorrections.ToLVI());
             if (WorkerLoad.CancellationPending) { e.Cancel = true; return; }
 
             //Storage
-            if (m_host.MainWindow.ActiveDatabase.IsOpen)
+            if (_plugin.m_host.MainWindow.ActiveDatabase.IsOpen)
             {
-                foreach (var pe in m_host.MainWindow.ActiveDatabase.RootGroup.GetEntries(true))
+                foreach (var pe in _plugin.m_host.MainWindow.ActiveDatabase.RootGroup.GetEntries(true))
                 {
                     foreach (var str in pe.Strings)
                     {
@@ -282,8 +278,8 @@ namespace TrayTotpGT
                     }
                 }
             }
-            ComboBoxTotpSeedStringName.Text = m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, TrayTotpGTExt.setdef_string_TotpSeed_StringName);
-            ComboBoxTotpSettingsStringName.Text = m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, TrayTotpGTExt.setdef_string_TotpSettings_StringName);
+            ComboBoxTotpSeedStringName.Text = _plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSeed_StringName);
+            ComboBoxTotpSettingsStringName.Text = _plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, TrayTotp_Plugin_Localization.setdef_string_TotpSettings_StringName);
             if (WorkerLoad.CancellationPending) e.Cancel = true;
         }
 
@@ -301,7 +297,7 @@ namespace TrayTotpGT
                 {
                     if (e.Result.ToString() == "Reset")
                     {
-                        MessageBox.Show("Settings restored to defaults!", TrayTotpGTExt.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show(FormSettings_Localization.SettingsDefaultValuesRestored, TrayTotp_Plugin_Localization.strTrayTotpPlugin, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
@@ -313,27 +309,27 @@ namespace TrayTotpGT
             e.Result = e.Argument;
 
             //Menus
-            m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_EntryContextCopy_Visible, CheckBoxShowCopyTotpEntryMenu.Checked);
-            m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_EntryContextSetup_Visible, CheckBoxShowSetupTotpEntryMenu.Checked);
-            m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_NotifyContext_Visible, CheckBoxShowTotpEntriesTrayMenu.Checked);
+            _plugin.m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_EntryContextCopy_Visible, CheckBoxShowCopyTotpEntryMenu.Checked);
+            _plugin.m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_EntryContextSetup_Visible, CheckBoxShowSetupTotpEntryMenu.Checked);
+            _plugin.m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_NotifyContext_Visible, CheckBoxShowTotpEntriesTrayMenu.Checked);
             if (WorkerSave.CancellationPending) { e.Cancel = true; return; }
 
             //TOTP Column
-            m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_TotpColumnCopy_Enable, CheckBoxTotpColumnClipboard.Checked);
-            m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_TotpColumnTimer_Visible, CheckBoxTotpColumnTimer.Checked);
+            _plugin.m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_TotpColumnCopy_Enable, CheckBoxTotpColumnClipboard.Checked);
+            _plugin.m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_TotpColumnTimer_Visible, CheckBoxTotpColumnTimer.Checked);
             if (WorkerSave.CancellationPending) { e.Cancel = true; return; }
 
             //Auto-Type
-            m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_AutoType_Enable, CheckBoxAutoType.Checked);
+            _plugin.m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_AutoType_Enable, CheckBoxAutoType.Checked);
             if (CheckBoxAutoTypeFieldName.Checked)
             {
-                string OldAutoTypeFieldName = m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_AutoType_FieldName, TrayTotpGTExt.setdef_string_AutoType_FieldName).ExtWithBrackets();
+                string OldAutoTypeFieldName = _plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_AutoType_FieldName, TrayTotpGTExt.setdef_string_AutoType_FieldName).ExtWithBrackets();
                 string NewAutoTypeFieldName = TextBoxAutoTypeFieldName.Text.ExtWithBrackets();
                 KeePass.Util.Spr.SprEngine.FilterPlaceholderHints.Remove(OldAutoTypeFieldName);
                 if (CheckBoxAutoTypeFieldRename.Checked) //Replace existing field of custom keystrokes from all entries and all groups
                 {
-                    m_host.MainWindow.ActiveDatabase.RootGroup.DefaultAutoTypeSequence = m_host.MainWindow.ActiveDatabase.RootGroup.DefaultAutoTypeSequence.Replace(OldAutoTypeFieldName, NewAutoTypeFieldName);
-                    foreach (var group in m_host.MainWindow.ActiveDatabase.RootGroup.GetGroups(true))
+                    _plugin.m_host.MainWindow.ActiveDatabase.RootGroup.DefaultAutoTypeSequence = _plugin.m_host.MainWindow.ActiveDatabase.RootGroup.DefaultAutoTypeSequence.Replace(OldAutoTypeFieldName, NewAutoTypeFieldName);
+                    foreach (var group in _plugin.m_host.MainWindow.ActiveDatabase.RootGroup.GetGroups(true))
                     {
                         group.DefaultAutoTypeSequence = group.DefaultAutoTypeSequence.Replace(OldAutoTypeFieldName, NewAutoTypeFieldName);
                         foreach (var pe in group.GetEntries(false))
@@ -345,23 +341,23 @@ namespace TrayTotpGT
                         }
                     }
                 }
-                m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_AutoType_FieldName, TextBoxAutoTypeFieldName.Text);
+                _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_AutoType_FieldName, TextBoxAutoTypeFieldName.Text);
                 KeePass.Util.Spr.SprEngine.FilterPlaceholderHints.Add(NewAutoTypeFieldName);
             }
             if (WorkerSave.CancellationPending) { e.Cancel = true; return; }
 
             //Time Correction
-            m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_TimeCorrection_Enable, CheckBoxTimeCorrection.Checked);
-            plugin.TimeCorrections.Enable = CheckBoxTimeCorrection.Checked;
-            m_host.CustomConfig.SetULong(TrayTotpGTExt.setname_ulong_TimeCorrection_RefreshTime, Convert.ToUInt64(NumericTimeCorrectionInterval.Value));
+            _plugin.m_host.CustomConfig.SetBool(TrayTotpGTExt.setname_bool_TimeCorrection_Enable, CheckBoxTimeCorrection.Checked);
+            _plugin.TimeCorrections.Enable = CheckBoxTimeCorrection.Checked;
+            _plugin.m_host.CustomConfig.SetULong(TrayTotpGTExt.setname_ulong_TimeCorrection_RefreshTime, Convert.ToUInt64(NumericTimeCorrectionInterval.Value));
             OtpProviderClient.TimeCorrection_Provider.Interval = Convert.ToInt16(NumericTimeCorrectionInterval.Value);
-            plugin.TimeCorrections.ResetThenAddRangeFromLVIs(ListViewTimeCorrectionList.Items);
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TimeCorrection_List, plugin.TimeCorrections.ToSetting());
+            _plugin.TimeCorrections.ResetThenAddRangeFromLVIs(ListViewTimeCorrectionList.Items);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TimeCorrection_List, _plugin.TimeCorrections.ToSetting());
             if (WorkerSave.CancellationPending) { e.Cancel = true; return; }
 
             //Storage
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, ComboBoxTotpSeedStringName.Text);
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, ComboBoxTotpSettingsStringName.Text);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, ComboBoxTotpSeedStringName.Text);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, ComboBoxTotpSettingsStringName.Text);
             if (WorkerSave.CancellationPending) e.Cancel = true;
         }
 
@@ -382,21 +378,21 @@ namespace TrayTotpGT
         private void WorkerReset_DoWork(object sender, DoWorkEventArgs e)
         {
             //Menus
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_EntryContextCopy_Visible, null);
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_EntryContextSetup_Visible, null);
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_NotifyContext_Visible, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_EntryContextCopy_Visible, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_EntryContextSetup_Visible, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_NotifyContext_Visible, null);
 
             //TOTP Column
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TotpColumnCopy_Enable, null);
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TotpColumnTimer_Visible, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TotpColumnCopy_Enable, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TotpColumnTimer_Visible, null);
 
             //Auto-Type
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_AutoType_Enable, null);
-            string OldAutoTypeFieldName = m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_AutoType_FieldName, TrayTotpGTExt.setdef_string_AutoType_FieldName).ExtWithBrackets();
-            string NewAutoTypeFieldName = TrayTotpGTExt.strTotp.ExtWithBrackets();
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_AutoType_Enable, null);
+            string OldAutoTypeFieldName = _plugin.m_host.CustomConfig.GetString(TrayTotpGTExt.setname_string_AutoType_FieldName, TrayTotpGTExt.setdef_string_AutoType_FieldName).ExtWithBrackets();
+            string NewAutoTypeFieldName = TrayTotp_Plugin_Localization.strTotp.ExtWithBrackets();
             KeePass.Util.Spr.SprEngine.FilterPlaceholderHints.Remove(OldAutoTypeFieldName);
-            m_host.MainWindow.ActiveDatabase.RootGroup.DefaultAutoTypeSequence = m_host.MainWindow.ActiveDatabase.RootGroup.DefaultAutoTypeSequence.Replace(OldAutoTypeFieldName, NewAutoTypeFieldName);
-            foreach (var group in m_host.MainWindow.ActiveDatabase.RootGroup.GetGroups(true))
+            _plugin.m_host.MainWindow.ActiveDatabase.RootGroup.DefaultAutoTypeSequence = _plugin.m_host.MainWindow.ActiveDatabase.RootGroup.DefaultAutoTypeSequence.Replace(OldAutoTypeFieldName, NewAutoTypeFieldName);
+            foreach (var group in _plugin.m_host.MainWindow.ActiveDatabase.RootGroup.GetGroups(true))
             {
                 group.DefaultAutoTypeSequence = group.DefaultAutoTypeSequence.Replace(OldAutoTypeFieldName, NewAutoTypeFieldName);
                 foreach (var pe in group.GetEntries(false))
@@ -407,18 +403,18 @@ namespace TrayTotpGT
                     }
                 }
             }
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_AutoType_FieldName, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_AutoType_FieldName, null);
             KeePass.Util.Spr.SprEngine.FilterPlaceholderHints.Add(NewAutoTypeFieldName);
 
             //Time Correction
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TimeCorrection_Enable, null);
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_ulong_TimeCorrection_RefreshTime, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_bool_TimeCorrection_Enable, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_ulong_TimeCorrection_RefreshTime, null);
             OtpProviderClient.TimeCorrection_Provider.Interval = Convert.ToInt16(TrayTotpGTExt.setdef_ulong_TimeCorrection_RefreshTime);
-            plugin.TimeCorrections.ResetThenAddRangeFromString(string.Empty);
+            _plugin.TimeCorrections.ResetThenAddRangeFromString(string.Empty);
 
             //Storage
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, null);
-            m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSeed_StringName, null);
+            _plugin.m_host.CustomConfig.SetString(TrayTotpGTExt.setname_string_TotpSettings_StringName, null);
         }
 
         private void WorkerReset_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)

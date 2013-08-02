@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Windows.Forms;
+
 using KeePass.UI;
 using KeePass.Plugins;
 using KeePassLib;
-using System.Windows.Forms;
+
 using OtpProviderClient;
 
 namespace TrayTotpGT
@@ -37,7 +39,7 @@ namespace TrayTotpGT
             /// <summary>
             /// Column Names, in the case this provider handles more than one column.
             /// </summary>
-            private readonly string[] ColumnName = new[] {strTotp};
+            private readonly string[] ColumnName = new[] {TrayTotp_CustomColumn_Localization.strTotp};
 
             /// <summary>
             /// Informs Keepass of the Column Names, in the case this provider handles more than one column.
@@ -77,18 +79,18 @@ namespace TrayTotpGT
                         if (ValidUrl)
                         {
                             var TimeCorrection = plugin.TimeCorrections[Settings[2]];
-                            if (TimeCorrection == null) return strWarningBadUrl;
+                            if (TimeCorrection == null) return TrayTotp_CustomColumn_Localization.strWarningBadUrl;
                             TotpGenerator.TimeCorrection = TimeCorrection.TimeCorrection;
                         }
                         if (plugin.SeedValidate(pe))
                         {
                             return TotpGenerator.Generate(Base32.Decode(plugin.SeedGet(pe).ReadString().ExtWithoutSpaces())) + (m_host.CustomConfig.GetBool(setname_bool_TotpColumnTimer_Visible, true) ? TotpGenerator.Timer.ToString().ExtWithParenthesis().ExtWithSpaceBefore() : string.Empty);
                         }
-                        return strWarningBadSeed;
+                        return TrayTotp_CustomColumn_Localization.strWarningBadSeed;
                     }
-                    return strWarningBadSet;
+                    return TrayTotp_CustomColumn_Localization.strWarningBadSet;
                 }
-                return (plugin.SettingsCheck(pe) || plugin.SeedCheck(pe) ? strWarningStorage : string.Empty);
+                return (plugin.SettingsCheck(pe) || plugin.SeedCheck(pe) ? TrayTotp_CustomColumn_Localization.strWarningStorage : string.Empty);
             }
 
             /// <summary>
