@@ -42,6 +42,7 @@
             this.CheckBoxSeedVisibility = new System.Windows.Forms.CheckBox();
             this.RadioButtonLength8Setup = new System.Windows.Forms.RadioButton();
             this.RadioButtonLength6Setup = new System.Windows.Forms.RadioButton();
+            this.RadioButtonLength6Setup.Checked = true;
             this.TextBoxSeedSetup = new System.Windows.Forms.TextBox();
             this.ComboBoxTimeCorrectionSetup = new System.Windows.Forms.ComboBox();
             this.PanelIntervalSetup = new System.Windows.Forms.Panel();
