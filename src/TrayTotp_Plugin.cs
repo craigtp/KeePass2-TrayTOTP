@@ -1,32 +1,17 @@
 ﻿using System;
-using System.Linq;
-using System.Drawing;
-using System.Windows.Forms;
-using System.ComponentModel;
 using System.Collections.Generic;
-
-using KeePass.App;
+using System.ComponentModel;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 using KeePass.App.Configuration;
-using KeePass.DataExchange;
-using KeePass.Forms;
-using KeePass.Ecas;
 using KeePass.Plugins;
-using KeePass.Resources;
 using KeePass.UI;
 using KeePass.Util;
 using KeePass.Util.Spr;
-
 using KeePassLib;
-using KeePassLib.Utility;
 using KeePassLib.Security;
-using KeePassLib.Delegates;
-using KeePassLib.Resources;
-using KeePassLib.Interfaces;
-using KeePassLib.Collections;
-using KeePassLib.Serialization;
-using KeePassLib.Cryptography.Cipher;
-using KeePassLib.Cryptography.PasswordGenerator;
-
+using KeePassLib.Utility;
 using OtpProviderClient;
 
 namespace TrayTotpGT
@@ -472,6 +457,19 @@ namespace TrayTotpGT
         /// <param name="e"></param>
         private void OnTimerTick(object sender, EventArgs e)
         {
+            // Guard clause
+            // This method can get called any time after the plugin is first initialized as the timer is enabled
+            // at that point.  We're not necessarily in the main KeePass window with a database already loaded
+            // when this event is fired, so it's important to ensure that the various interface elements that we'll
+            // interact with within this event are actaully loaded and exist before we try to update the TOTP column.
+            if (m_host == null || m_host.MainWindow == null || !m_host.MainWindow.Visible
+                || m_host.MainWindow.ActiveDatabase == null || !m_host.MainWindow.ActiveDatabase.IsOpen
+                || KeePass.Program.Config == null || KeePass.Program.Config.MainWindow == null
+                || KeePass.Program.Config.MainWindow.EntryListColumns == null)
+            {
+                return;
+            }
+
             if ((m_host.MainWindow.ActiveDatabase.IsOpen) && (m_host.MainWindow.Visible))
             {
                 if (KeePass.Program.Config.MainWindow.EntryListColumns.Count != liColumnsCount)
