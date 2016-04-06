@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 using KeePass.App.Configuration;
 using KeePass.Plugins;
@@ -142,7 +143,14 @@ namespace TrayTotpGT
         /// <summary>
         /// Entries Refresh Timer.
         /// </summary>
-        private Timer liRefreshTimer = new Timer();
+        //private Timer liRefreshTimer = new Timer();
+        private System.Timers.Timer liRefreshTimer = new System.Timers.Timer();
+
+        /// <summary>
+        /// The synchronisation context to post timer messages to.
+        /// </summary>
+        private SynchronizationContext _syncContext;
+
         /// <summary>
         /// Entries Refresh Timer.
         /// </summary>
@@ -185,6 +193,11 @@ namespace TrayTotpGT
             //Internalise Host Handle.
             if (host == null) return false;
             m_host = host;
+
+            // Capture the current synchronisation context to allow us to
+            // post a message back to the context's thread in order to update
+            // the user interface (TOTP column) when the timer event fires.
+            _syncContext = SynchronizationContext.Current;
 
             //Instanciate Help Form.
             HelpForm = new FormHelp(this);
@@ -249,7 +262,7 @@ namespace TrayTotpGT
             //Refresh Timer.
             liRefreshTimer.Interval = setstat_int_EntryList_RefreshRate;
             liRefreshTimer.Enabled = true;
-            liRefreshTimer.Tick += OnTimerTick;
+            liRefreshTimer.Elapsed += OnTimerTick;
 
             //Time Correction.
             TimeCorrections = new TimeCorrection_Collection(this, m_host.CustomConfig.GetBool(setname_bool_TimeCorrection_Enable, false));
@@ -465,12 +478,13 @@ namespace TrayTotpGT
             if (m_host == null || m_host.MainWindow == null || !m_host.MainWindow.Visible
                 || m_host.MainWindow.ActiveDatabase == null || !m_host.MainWindow.ActiveDatabase.IsOpen
                 || KeePass.Program.Config == null || KeePass.Program.Config.MainWindow == null
-                || KeePass.Program.Config.MainWindow.EntryListColumns == null)
+                || KeePass.Program.Config.MainWindow.EntryListColumns == null
+                || !m_host.MainWindow.ActiveDatabase.IsOpen || !m_host.MainWindow.Visible)
             {
                 return;
             }
 
-            if ((m_host.MainWindow.ActiveDatabase.IsOpen) && (m_host.MainWindow.Visible))
+            _syncContext.Post((o) =>
             {
                 if (KeePass.Program.Config.MainWindow.EntryListColumns.Count != liColumnsCount)
                 {
@@ -514,7 +528,7 @@ namespace TrayTotpGT
                         liRefreshTimerPreviousCounter = CurrentSeconds;
                     }
                 }
-            }
+            }, null);
         }
 
         /// <summary>
@@ -821,7 +835,7 @@ namespace TrayTotpGT
             liColumnTotp = null;
 
             //Remove Timer.
-            liRefreshTimer.Tick -= OnTimerTick;
+            liRefreshTimer.Elapsed -= OnTimerTick;
             liRefreshTimer.Dispose();
         }
 
