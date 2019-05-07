@@ -36,6 +36,7 @@ namespace TrayTotpGT
         /// </summary>
         internal const string keeobj_string_EntryContextMenuCopyPassword_Name = "m_ctxEntryCopyPassword";
         internal const string keeobj_string_EntryContextMenuEntriesSubMenu_Name = "m_ctxEntryMassModify";
+        internal const string keeobj_string_EntryContextMenuEntriesSubMenu_NameAlternative = "m_ctxEntryEditQuick";
         internal const string keeobj_string_EntryContextMenuEntriesSubMenuSeperator1_Name = "m_ctxEntrySelectedSep1";
         /// <summary>
         /// Constants (custom string key).
@@ -235,7 +236,17 @@ namespace TrayTotpGT
             enMenuSetupTotp.Image = Properties.Resources.TOTP_Setup;
             enMenuSetupTotp.ShortcutKeys = (Keys)Shortcut.CtrlShiftI;
             enMenuSetupTotp.Click += OnEntryMenuSetupClick;
-            var ContextMenu = (ToolStripMenuItem)m_host.MainWindow.EntryContextMenu.Items.Find(keeobj_string_EntryContextMenuEntriesSubMenu_Name, true)[0];
+            ToolStripMenuItem ContextMenu;
+            try
+            {
+                //For KeePass versions 2.41 or below.
+                ContextMenu = (ToolStripMenuItem) m_host.MainWindow.EntryContextMenu.Items.Find(keeobj_string_EntryContextMenuEntriesSubMenu_Name, true)[0];
+            }
+            catch
+            {
+                // For KeePass versions 2.42 and above.
+                ContextMenu = (ToolStripMenuItem)m_host.MainWindow.EntryContextMenu.Items.Find(keeobj_string_EntryContextMenuEntriesSubMenu_NameAlternative, true)[0];
+            }
             ContextMenu.DropDownItems.Insert(ContextMenu.DropDownItems.IndexOfKey(keeobj_string_EntryContextMenuEntriesSubMenuSeperator1_Name) + 1, enMenuSetupTotp);
             enMenuSeperator = new ToolStripSeparator();
             ContextMenu.DropDownItems.Insert(ContextMenu.DropDownItems.IndexOf(enMenuSetupTotp) + 1, enMenuSeperator);
